@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}ACT MANAGER{% endblock %}
+
+{% block head %}
+    {{super()}}
+    <script language="JavaScript">
+
+        $(document).ready(function(){
+           // 모달창에서 '예'를 클릭하면
+            $(".MyInputClass").click(function(){
+
+                $(".MyFormClass").attr("method", "post");
+                $(".MyFormClass").attr("action", "/text_board/delete");
+                $(".MyFormClass").submit();
+            });
+
+
+            // act 하나 선택하거나 직접 입력하면
+            $("#act_id").change(function(){
+                var act = $(this).val();
+
+                // 비동기로 act에 해당하는 category, topic 데이터를 가져온다.
+                $.ajax({
+                   type:"POST",
+                   url:"/ajax_find_cat_n_topic",
+                   data:{'act' : act},
+                   success:function(res){
+                       var json_obj = JSON.parse(res);
+                       var category = json_obj['category'];
+                       var topic = json_obj['topic'];
+
+                       $("#cat_id").val(category);
+                       $("#top_id").val(topic);
+                   },
+                    error:function(error){
+                       alert('ERROR : ', error);
+                    }
+                });
+
+            });
+
+
+            // '추가' 버튼을 누르면
+            $("#act_add_btn_id").click(function(){
+               $("#act_add_frm_id").attr("method", "post");
+               $("#act_add_frm_id").attr("action", "/act_create?page={{page}}");
+               $("#act_add_frm_id").submit();
+            });
+        });
+
+        function trigger_modal(id){
+            $(".modal-footer #hidden_id").val(id);
+            $("#myModal" + id).modal();
+        }
+    </script>
+
+{% endblock %}
+
+{% block nav %}
+<ul class="navbar-nav">
+    <li class="nav-item active">
+        <a class="nav-link" href="#">Act Manager</a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('text_board', page=1, col_name='sent_id', asc1_desc0=1)}}">User Speech Board</a>
+    </li>
+
+    <li class="nav-item">
+        <a class="nav-link" href="{{url_for('export', button_type='')}}">Export</a>
+    </li>
+</ul>
+
+<ul class="navbar-nav ml-auto">
+    <li class="nav-item"><a class="nav-link" href="#">{{user_id}}님 접속중...</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{url_for('logout')}}"><i class="fa-blink"><i class="fas fa-sign-out-alt"></i></i> 로그아웃</a></li>
+</ul>
+{% endblock %}
+
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="row">
+        <form class="form-inline my-2" id="frm" role="search">
+            <div class="col-md-10">
+                <div class="form-group">
+                    <input type="text" class="form-control col-md-12" id="SearchText" name="search_msg" placeholder="문장을 검색해주세요.">
+                    <input type="hidden" name="page" value="{{page}}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" class="btn btn-primary" onclick="search_text()" value="검색">
+            </div>
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col-2">
+            {% include 'act_list.html' ignore missing %}
+        </div>
+
+        <div class="col">
+
+            <div class="card border-dark my-2">
+                <form id="act_add_frm_id">
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-inline">
+
+                                <div class="card-body">
+                                        <div class="card-title font-weight-bold">Act</div>
+
+                                        <div clsas="card-text">
+                                            <div class="col font-weight-bold">
+                                                <input list="act_list" id="act_id" name="act">
+                                                <datalist id="act_list">
+                                                    {% for row_act in rows_act %}
+                                                        <option value="{{row_act.act}}">{{row_act.act}}</option>
+                                                    {% endfor %}
+                                                </datalist>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="card-body">
+                                        <div class="card-title font-weight-bold">Topic</div>
+
+                                        <div clsas="card-text">
+                                            <div class="col font-weight-bold">
+                                                <input list="top_list" id="top_id" name="act">
+                                                <datalist id="top_list">
+                                                    {% for row_act in rows_act %}
+                                                        <option value="{{row_act.act}}">{{row_act.act}}</option>
+                                                    {% endfor %}
+                                                </datalist>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="card-body">
+                                    <div class="card-title font-weight-bold">Category</div>
+
+                                    <div clsas="card-text">
+                                        <div class="col font-weight-bold">
+                                            <input type="text" class="form-control" name='category' id="cat_id" placeholder="카테고리 입력">
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                        <div class="col-2">
+                            <input type="button" class="btn btn-block btn-primary font-weight-bold" style="height:100%" id="act_add_btn_id" value="추가">
+                        </div>
+                    </div>
+
+
+
+                </form>
+            </div>
+
+
+
+            <!--{{pagination.info}}-->
+            {{pagination.links}}
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <div>
+                            {% set cname_1 = 'fas fa-sort' %}
+                            {% set cname_2 = 'fas fa-sort' %}
+
+                            {% if asc1_desc0 == '0' and col_name == 'id' %}
+                                {% set cname_1 = 'fas fa-sort-down' %}
+                                {% set cname_2 = 'fas fa-sort' %}
+                            {% elif asc1_desc0 == '1' and col_name == 'id' %}
+                                {% set cname_1 = 'fas fa-sort-up' %}
+                                {% set cname_2 = 'fas fa-sort' %}
+
+                            {% elif asc1_desc0 == '0' and col_name == 'act_count' %}
+                                {% set cname_2 = 'fas fa-sort-down' %}
+                                {% set cname_1 = 'fas fa-sort' %}
+                            {% elif asc1_desc0 == '1' and col_name == 'act_count' %}
+                                {% set cname_2 = 'fas fa-sort-up' %}
+                                {% set cname_1 = 'fas fa-sort' %}
+
+                            {% else %}
+                                {% set cname_1 = 'fas fa-sort' %}
+                                {% set cname_2 = 'fas fa-sort' %}
+                            {% endif %}
+                            </div>
+                            <th style="width : 15%" class="text-center">ID<button class="btn" id="id" onclick="order_text(id,'{{page}}')"><i class='{{cname_1}}'></i></button></th>
+                            <th class="text-center">Act</th>
+                            <th style="width : 15%" class="text-center">Act Count<button class="btn" id="act_count" onclick="order_text(id,'{{page}}')"><i class='{{cname_2}}'></i></button></th>
+                            <th style="width : 15%" class="text-center">Category</th>
+                            <th style="width : 15%" class="text-center">Topic</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    {% for row in board_total %}
+                        <tr>
+                            <td class="text-center">{{row.id}}</td>
+                            <td class="text-center">{{row.act}}</td>
+                            <td class="text-center">{{row.act_count}}</td>
+                            <td class="text-center">{{row.category}}</td>
+                            <td class="text-center">{{row.topic}}</td>
+
+                            <td class="text-center">
+                                <input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal('{{row.id}}')" value="삭제">
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+            {{pagination.links}}
+
+
+        </div>
+    </div>
+
+
+    {% for row in board_total %}
+        <!-- Modal -->
+        <div id="myModal{{row.id}}" class="modal fade" role="dialog">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i>경고</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>{{row.id}}번 액트를 정말 삭제하시겠습니까?</p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>
+                        <form class="MyFormClass">
+                            <input type="submit" class="btn btn-primary MyInputClass" data-dismiss="modal" value="예">
+                            <input type="hidden" name="id" id="hidden_id" value="">
+                            <input type="hidden" name="table_name" value="act">
+                            <input type="hidden" name="page" value="{{page}}">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <a id="back-to-top" href="#" class="btn btn-primary btn-lg back-to-top" role="button" title="Click to return on the top page" data-toggle="tooltip" data-placement="left"><i class="fas fa-arrow-circle-up fa-2x"></i></a>
+
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}LOGIN{% endblock %}
+
+{% block head %}
+    {{super()}}}
+    <script>
+        $(document).ready(function(){
+
+            if('{{is_exist_id}}' == 0){
+                alert('존재하지 않는 아이디 입니다.');
+            }
+
+            $("#login_btn_id").click(function(){
+               var id = $("#id_id").val();
+               var pw = $("#pw_id").val();
+
+
+               if(id == '' || pw == ''){
+                   alert('아이디와 비밀번호를 모두 입력해주십시오.');
+               }
+               else{
+                   $("#frm").attr('method', 'post');
+                   $("#frm").attr('action', '/login_check');
+                }
+            });
+
+        });
+
+    </script>
+{% endblock %}
+
+
+{% block content %}
+    <div class="container">
+        <form id="frm">
+
+            <div class="form-group">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="flashes my-4">
+                            {% for category, message in messages %}
+                            <p class="{{category}} col-md-6 text-center" style="font-size:20px">{{message}}</p>
+                            {% endfor %}
+                        </div>
+
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+
+            <div class="form-group">
+                <div class="page-header">
+                    <h2>로그인 정보를 입력해 주세요</h2>
+                </div>
+            </div>
+
+
+            <div class="form-group form-row">
+                <label class="col-form-label col-md-1" for="id_id">아이디 : </label>
+                <div class="col-md-5">
+                    <input type="text" class="form-control" name="id" id="id_id" placeholder="아이디를 입력해주세요.">
+                </div>
+            </div>
+
+
+            <div class="form-group form-row">
+                <label class="col-form-label col-md-1" for="pw_id">비밀번호 : </label>
+                <div class="col-md-5">
+                    <input type="password" class="form-control" name="pw" id="pw_id" placeholder="비밀번호를 입력해주세요.">
+                </div>
+            </div>
+
+
+            <div class="form-group form-row">
+                <div class="offset-md-1"></div>
+                <div class="col-md-5">
+                    <input type="submit" class="btn btn-primary btn-block" id="login_btn_id" value="로그인">
+                </div>
+            </div>
+
+
+            <div class="form-group form-row">
+                <div class="offset-md-1"></div>
+                <div class="col-md-5">
+                    <input type="button" class="btn btn-primary btn-block" onclick="location.href='/sign_up';" value="회원가입">
+                </div>
+            </div>
+
+
+        </form>
+    </div>
+
+{% endblock %}

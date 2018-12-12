@@ -1,0 +1,8 @@
+<h3>ACT LIST</h3>
+<ul class="list-group">
+    {% for row_act in rows_act %}
+        <li class="list-group-item">
+            <a href="#">{{row_act.act}}</a><span class="badge badge-pill badge-info float-right">{{row_act.act_count}}</span>
+        </li>
+    {% endfor %}
+</ul>

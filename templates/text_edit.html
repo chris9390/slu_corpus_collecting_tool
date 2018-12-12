@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}EDIT{% endblock %}
+{% block head %}
+    {{super()}}
+    <script language="JavaScript">
+
+
+        $(document).ready(function(){
+
+
+
+
+            $('#save').prop('disabled', true);
+
+
+            $("#confirm").click(function(){
+
+                if($('#confirm').is(':checked')){
+                    $('#save').prop('disabled', false);
+                }
+                else{
+                    $('#save').prop('disabled', true);
+                }
+
+            });
+
+
+            $("#save").click(function(){
+
+                var search_msg = '{{search_msg}}';
+                var article_id = '{{article_id}}';
+                var action;
+
+                if(search_msg == ''){
+                    action = '/text_board?page={{page}}';
+                }
+                else{
+                    action = '/text_board?page={{page}}&search_msg={{search_msg}}';
+                }
+
+                if(article_id != ''){
+                    action += '&article_id={{article_id}}';
+                }
+
+
+                $("#frm").attr('method', 'post');
+                $("#frm").attr('action', action);
+                $("#frm").submit();
+
+
+            });
+
+
+            if('{{is_bef_exist}}' == 0){
+                $(".mybefbtn").prop('disabled', true);
+            }
+
+
+            if('{{is_aft_exist}}' == 0){
+                $(".myaftbtn").prop('disabled', true);
+            }
+
+
+        });
+
+
+
+
+
+    </script>
+
+    <style>
+        .btn-xl {
+            width : 50%;
+            line-height : 500%;
+        }
+    </style>
+{% endblock %}
+
+{% block nav %}
+<ul class="navbar-nav ml-auto">
+    <li><a class="nav-link" href="#">{{user_id}}님 접속중...</a></li>
+    <li><a class="nav-link" href="{{url_for('logout')}}"><i class="fa-blink"><i class="fas fa-sign-out-alt"></i></i> 로그아웃</a></li>
+</ul>
+{% endblock %}
+
+
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="row align-items-center">
+
+            <div class="col-md-2 text-center">
+                {% if search_msg is defined %}
+                    <button type="button" class="btn btn-primary btn-xl mybefbtn" onclick="location.href='/text_board/edit?where_to=bef&article_id={{article_id}}&sent_id={{sent_id}}&page={{page}}&search_msg={{search_msg}}'"><i class="fas fa-arrow-left fa-3x" style="vertical-align: middle;"></i></button>
+                {% else %}
+                    <button type="button" class="btn btn-primary btn-xl mybefbtn" onclick="location.href='/text_board/edit?where_to=bef&article_id={{article_id}}&sent_id={{sent_id}}&page={{page}}'"><i class="fas fa-arrow-left fa-3x" style="vertical-align: middle;"></i></button>
+                {% endif %}
+            </div>
+
+            <div class="col-md-8">
+                <form id="frm">
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="flashes my-4">
+                                {% for category, message in messages %}
+                                    <p class="{{category}} text-center" style="font-size:20px">{{message}}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+
+                    <div class="page-header my-4">
+                        <h2>변환된 텍스트를 확인하고, 틀린 부분이 있으면 다시 고쳐주세요.</h2>
+                    </div>
+
+
+                    <div class="form-group form-inline">
+
+                        <div class="card border-dark mx-1">
+                            <div class="card-body">
+                                <div class="card-title">기사 번호</div>
+
+                                <div clsas="card-text">
+                                    <div class="col text-center font-weight-bold">
+                                        {{article_id}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-dark mx-1">
+                            <div class="card-body">
+                                <div class="card-title">문장 번호</div>
+
+                                <div clsas="card-text">
+                                    <div class="col text-center font-weight-bold">
+                                        {{sent_id}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-dark mx-1">
+                            <div class="card-body">
+                                <div class="card-title">텍스트 편집일</div>
+
+                                <div clsas="card-text">
+                                    <div class="col text-center font-weight-bold">
+                                        {% if sent_modified_date|string == '1900-01-01 00:00:00' %}
+                                            -
+                                        {% else %}
+                                            {{sent_modified_date}}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card border-dark mx-1">
+                            <div class="card-body">
+                                <div class="card-title">수정 횟수</div>
+
+                                <div clsas="card-text">
+                                    <div class="col text-center font-weight-bold">
+                                        {{sent_converted_count}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="ORIGINAL">ORIGINAL</label>
+                        <input type="text" class="form-control" id="ORIGINAL" name="ORIGINAL" value="{{original_text}}">
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="CONVERTED">CONVERTED</label>
+                        <input type="text" class="form-control" id="CONVERTED" name="CONVERTED" value="{{converted_text}}">
+                    </div>
+
+
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label><input type="checkbox" name="confirm" id="confirm">변환 확인 <span style="color:red">(필수 체크)</span></label>
+                        </div>
+
+                        <div class="checkbox">
+                            <label><input type="checkbox" name="ambiguity" id="ambiguity">중의성</label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-1">
+
+                                <input type="button" class="btn btn-danger" id="cancel" name="cancel" onclick="location.href ='/text_board?article_id={{article_id}}'" value="취소">
+
+                                <!--
+                                <input type="button" class="btn btn-danger" id="cancel" name="cancel" onclick="history.back()" value="취소">
+                                -->
+
+                            </div>
+
+                            <div class="col-md-1">
+                                <input type="submit" class="btn btn-primary" id="save" name="save" value="저장">
+                            </div>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="col-md-2 text-center">
+                {% if search_msg is defined %}
+                    <button type="button" class="btn btn-primary btn-xl myaftbtn" onclick="location.href='/text_board/edit?where_to=aft&article_id={{article_id}}&sent_id={{sent_id}}&page={{page}}&search_msg={{search_msg}}'"><i class="fas fa-arrow-right fa-3x" style="vertical-align: middle;"></i></button>
+                {% else %}
+                    <button type="button" class="btn btn-primary btn-xl myaftbtn" onclick="location.href='/text_board/edit?where_to=aft&article_id={{article_id}}&sent_id={{sent_id}}&page={{page}}'"><i class="fas fa-arrow-right fa-3x" style="vertical-align: middle;"></i></button>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+{% endblock %}

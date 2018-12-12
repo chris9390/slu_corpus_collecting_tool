@@ -1,0 +1,182 @@
+<div class="accordion" id="accordion">
+    <ul class="nav flex-column flex-nowrap">
+        {% for row_category in rows_category %}
+            <li class="nav-item">
+                <div class="card">
+                    <div class="card-header">
+                        <a class="nav-link collapsed" href="#submenu{{loop.index}}" data-toggle="collapse">{{row_category.category}}</a>
+                    </div>
+
+                    <div class="collapse" id="submenu{{loop.index}}" data-parent="#accordion">
+                        <ul class="flex-column pl-2 nav">
+                            {% for row_topic in rows_topic %}
+                                {% if row_category.id == row_topic.category_id %}
+                                    <li class="nav-item"><a class="nav-link" href="#">row_topic.topic</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+
+        <!--
+        <li class="nav-item">
+            <div class="card">
+
+                <div class="card-header">
+                    <a class="nav-link collapsed" href="#submenu1" data-toggle="collapse">정치 ({{sid1_count['정치']}})</a>
+                </div>
+
+
+                <div class="collapse" id="submenu1" data-parent="#accordion">
+                    <ul class="flex-column pl-2 nav">
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=정치&sid2=청와대">청와대 ({{sid2_count['청와대']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=정치&sid2=국회/정당">국회/정당 ({{sid2_count['국회/정당']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=정치&sid2=북한">북한 ({{sid2_count['북한']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=정치&sid2=행정">행정 ({{sid2_count['행정']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=정치&sid2=국방/외교">국방/외교 ({{sid2_count['국방/외교']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=정치&sid2=청와대">정치 일반 ({{sid2_count['정치 일반']}})</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </li>
+
+
+
+        <li class="nav-item">
+            <div class="card">
+
+                <div class="card-header">
+                    <a class="nav-link collapsed" href="#submenu2" data-toggle="collapse">경제 ({{sid1_count['경제']}})</a>
+                </div>
+
+
+                <div class="collapse" id="submenu2" data-parent="#accordion">
+                    <ul class="flex-column pl-2 nav">
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=금융">금융 ({{sid2_count['금융']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=증권">증권 ({{sid2_count['증권']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=산업/재계">산업/재계 ({{sid2_count['산업/재계']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=중기/벤처">중기/벤처 ({{sid2_count['중기/벤처']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=부동산">부동산 ({{sid2_count['부동산']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=글로벌 경제">글로벌 경제 ({{sid2_count['글로벌 경제']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=생활 경제">생활 경제 ({{sid2_count['생활 경제']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=경제&sid2=경제 일반">경제 일반 ({{sid2_count['경제 일반']}})</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </li>
+
+
+        <li class="nav-item">
+            <div class="card">
+
+                <div class="card-header">
+                    <a class="nav-link collapsed" href="#submenu3" data-toggle="collapse">사회 ({{sid1_count['사회']}})</a>
+                </div>
+
+
+                <div class="collapse" id="submenu3" data-parent="#accordion">
+                    <ul class="flex-column pl-2 nav">
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=사건사고">사건사고 ({{sid2_count['사건사고']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=교육">교육 ({{sid2_count['교육']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=노동">노동 ({{sid2_count['노동']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=언론">언론 ({{sid2_count['언론']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=환경">환경 ({{sid2_count['환경']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=인권/복지">인권/복지 ({{sid2_count['인권/복지']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=식품/의료">식품/의료 ({{sid2_count['식품/의료']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=지역">지역 ({{sid2_count['지역']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=인물">인물 ({{sid2_count['인물']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=사회&sid2=사회 일반">사회 일반 ({{sid2_count['사회 일반']}})</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </li>
+
+
+
+        <li class="nav-item">
+            <div class="card">
+
+                <div class="card-header">
+                    <a class="nav-link collapsed" href="#submenu4" data-toggle="collapse">생활/문화 ({{sid1_count['생활/문화']}})</a>
+                </div>
+
+
+                <div class="collapse" id="submenu4" data-parent="#accordion">
+                    <ul class="flex-column pl-2 nav">
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=건강정보">건강정보 ({{sid2_count['건강정보']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=자동차/시승기">자동차/시승기 ({{sid2_count['자동차/시승기']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=도로/교통">도로/교통 ({{sid2_count['도로/교통']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=여행/레저">여행/레저 ({{sid2_count['여행/레저']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=음식/맛집">음식/맛집 ({{sid2_count['음식/맛집']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=패션/뷰티">패션/뷰티 ({{sid2_count['패션/뷰티']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=공연/전시">공연/전시 ({{sid2_count['공연/전시']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=책">책 ({{sid2_count['책']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=종교">종교 ({{sid2_count['종교']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=날씨">날씨 ({{sid2_count['날씨']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=생활/문화&sid2=생활문화 일반">생활문화 일반 ({{sid2_count['생활문화 일반']}})</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </li>
+
+
+
+        <li class="nav-item">
+            <div class="card">
+
+                <div class="card-header">
+                    <a class="nav-link collapsed" href="#submenu5" data-toggle="collapse">세계 ({{sid1_count['세계']}})</a>
+                </div>
+
+
+                <div class="collapse" id="submenu5" data-parent="#accordion">
+                    <ul class="flex-column pl-2 nav">
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=세계&sid2=아시아/호주">아시아/호주 ({{sid2_count['아시아/호주']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=세계&sid2=미국/중남미">미국/중남미 ({{sid2_count['미국/중남미']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=세계&sid2=유럽">유럽 ({{sid2_count['유럽']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=세계&sid2=중동/아프리카">중동/아프리카 ({{sid2_count['중동/아프리카']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=세계&sid2=세계 일반">세계 일반 ({{sid2_count['세계 일반']}})</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </li>
+
+
+
+
+
+        <li class="nav-item">
+            <div class="card">
+
+                <div class="card-header">
+                    <a class="nav-link collapsed" href="#submenu6" data-toggle="collapse">IT/과학 ({{sid1_count['IT/과학']}})</a>
+                </div>
+
+
+                <div class="collapse" id="submenu6" data-parent="#accordion">
+                    <ul class="flex-column pl-2 nav">
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=모바일">모바일 ({{sid2_count['모바일']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=인터넷/SNS">인터넷/SNS ({{sid2_count['인터넷/SNS']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=통신/뉴미디어">통신/뉴미디어 ({{sid2_count['통신/뉴미디어']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=IT 일반">IT 일반 ({{sid2_count['IT 일반']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=보안/해킹">보안/해킹 ({{sid2_count['보안/해킹']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=컴퓨터">컴퓨터 ({{sid2_count['컴퓨터']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=게임/리뷰">게임/리뷰 ({{sid2_count['게임/리뷰']}})</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/article_board?sid1=IT/과학&sid2=과학 일반">과학 일반 ({{sid2_count['과학 일반']}})</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </li>
+        -->
+
+
+    </ul>
+</div>
