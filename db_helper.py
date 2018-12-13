@@ -885,6 +885,14 @@ class DB_Helper:
     # ===============================================================================================
     # ===============================================================================================
 
+    def insert_new_act(self, act, topic_id, category_id):
+        c = self.conn.cursor()
+
+        sql = "INSERT INTO act (act, topic_id, category_id) VALUES ('%s', %s, %s)" % (act, topic_id, category_id)
+
+        c.execute(sql)
+        self.conn.commit()
+        c.close()
 
 
 
@@ -916,7 +924,7 @@ class DB_Helper:
     def select_rows_by_condition(self, column_name, table_name, condition):
         c = self.conn.cursor()
 
-        sql = "SELECT * FROM %s WHRER %s = %s" % (table_name, column_name, condition)
+        sql = "SELECT * FROM %s WHERE %s = '%s'" % (table_name, column_name, condition)
 
         c.execute(sql)
 

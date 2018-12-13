@@ -6,6 +6,7 @@
     <script language="JavaScript">
 
         $(document).ready(function(){
+
            // 모달창에서 '예'를 클릭하면
             $(".MyInputClass").click(function(){
 
@@ -15,25 +16,31 @@
             });
 
 
-            // act 하나 선택하거나 직접 입력하면
-            $("#act_id").change(function(){
-                var act = $(this).val();
+            // category 하나 선택하거나 직접 입력하면
+            $("#cat_id").change(function(){
+                $("#top_id").val("");
+                $("#act_id").val("");
+                var category = $(this).val();
 
-                // 비동기로 act에 해당하는 category, topic 데이터를 가져온다.
+                // cat에 해당하는 topic 데이터를 비동기 방식으로 가져온다.
                 $.ajax({
                    type:"POST",
-                   url:"/ajax_find_cat_n_topic",
-                   data:{'act' : act},
+                   url:"/ajax_find_topic",
+                   data:{'category' : category},
                    success:function(res){
                        var json_obj = JSON.parse(res);
-                       var category = json_obj['category'];
                        var topic = json_obj['topic'];
 
-                       $("#cat_id").val(category);
-                       $("#top_id").val(topic);
+
+                       var text = "";
+                       var i;
+                       for(i = 0 ; i < topic.length ; i++){
+                           text += "<option value='" + topic[i] + "'>";
+                       }
+                       $("#top_list").html(text);
                    },
                     error:function(error){
-                       alert('ERROR : ', error);
+                       alert('ERROR : ' + error);
                     }
                 });
 
@@ -42,13 +49,64 @@
 
             // '추가' 버튼을 누르면
             $("#act_add_btn_id").click(function(){
-               $("#act_add_frm_id").attr("method", "post");
-               $("#act_add_frm_id").attr("action", "/act_create?page={{page}}");
-               $("#act_add_frm_id").submit();
+                var category = $("#cat_id").val();
+                var topic = $("#top_id").val();
+                var act = $("#act_id").val();
+
+                if(category == "" || topic == "" || act == ""){
+
+                    $.notify("Category, Topic, Act를 모두 입력해주세요."
+                    ,{
+                        type : 'danger',
+                        delay : 2000,
+                        animate: {
+                            enter: 'animated bounceInDown',
+                            exit: 'animated hinge'
+                        }
+                    });
+                }
+                else{
+                    $.ajax({
+                       type:"POST",
+                       url:"/ajax_add_act",
+                       data:{'category' : category, 'topic' : topic, 'act' : act},
+                        success:function(res){
+                            var json_obj = JSON.parse(res);
+                            var id = json_obj['id'];
+                            var act = json_obj['act'];
+                            var category = json_obj['category'];
+                            var topic = json_obj['topic'];
+                            var act_count = 0;
+                            alert(id);
+                            $("#act_list_id").append('<li class="list-group-item"><a href="#">' + act + '</a><span class="badge badge-pill badge-info float-right">' + act_count + '</span></li>');
+                            $("#act_board_id").prepend('<tr><td class="text-center">' + id + '</td><td class="text-center">' + act + '</td><td class="text-center">' + act_count + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal(' + "'" + id + "'" + ')" value="삭제"></td></tr>');
+
+                            $.notify("Act가 추가되었습니다."
+                            ,{
+                                type : 'success',
+                                delay : 2000,
+                                animate: {
+                                    enter: 'animated bounceInDown',
+                                    exit: 'animated hinge'
+                                }
+                            });
+                        },
+                        error:function(error){
+                           alert('ERROR : ' + error);
+                        }
+                    });
+
+                }
+
+
+               //$("#act_add_frm_id").attr("method", "post");
+               //$("#act_add_frm_id").attr("action", "/act_create?page={{page}}");
+               //$("#act_add_frm_id").submit();
             });
         });
 
         function trigger_modal(id){
+            alert(id);
             $(".modal-footer #hidden_id").val(id);
             $("#myModal" + id).modal();
         }
@@ -63,7 +121,7 @@
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" href="{{url_for('text_board', page=1, col_name='sent_id', asc1_desc0=1)}}">User Speech Board</a>
+        <a class="nav-link" href="{{url_for('text_board', col_name='sent_id', asc1_desc0=1)}}">User Speech Board</a>
     </li>
 
     <li class="nav-item">
@@ -86,7 +144,7 @@
             <div class="col-md-10">
                 <div class="form-group">
                     <input type="text" class="form-control col-md-12" id="SearchText" name="search_msg" placeholder="문장을 검색해주세요.">
-                    <input type="hidden" name="page" value="{{page}}">
+                    <!--<input type="hidden" name="page" value="{{page}}">-->
                 </div>
             </div>
 
@@ -110,14 +168,14 @@
                             <div class="form-inline">
 
                                 <div class="card-body">
-                                        <div class="card-title font-weight-bold">Act</div>
+                                    <div class="card-title font-weight-bold">Category</div>
 
-                                        <div clsas="card-text">
-                                            <div class="col font-weight-bold">
-                                                <input list="act_list" id="act_id" name="act">
-                                                <datalist id="act_list">
-                                                    {% for row_act in rows_act %}
-                                                        <option value="{{row_act.act}}">{{row_act.act}}</option>
+                                    <div clsas="card-text">
+                                        <div class="col font-weight-bold">
+                                            <input list="cat_list" id="cat_id" name="cat">
+                                                <datalist id="cat_list">
+                                                    {% for row_category in rows_category %}
+                                                        <option value="{{row_category.category}}">
                                                     {% endfor %}
                                                 </datalist>
                                         </div>
@@ -132,9 +190,6 @@
                                             <div class="col font-weight-bold">
                                                 <input list="top_list" id="top_id" name="act">
                                                 <datalist id="top_list">
-                                                    {% for row_act in rows_act %}
-                                                        <option value="{{row_act.act}}">{{row_act.act}}</option>
-                                                    {% endfor %}
                                                 </datalist>
                                         </div>
                                     </div>
@@ -142,14 +197,15 @@
 
 
                                 <div class="card-body">
-                                    <div class="card-title font-weight-bold">Category</div>
+                                        <div class="card-title font-weight-bold">Act</div>
 
-                                    <div clsas="card-text">
-                                        <div class="col font-weight-bold">
-                                            <input type="text" class="form-control" name='category' id="cat_id" placeholder="카테고리 입력">
+                                        <div clsas="card-text">
+                                            <div class="col font-weight-bold">
+                                                <input type="text" id="act_id" name="act">
                                         </div>
                                     </div>
                                 </div>
+
 
                             </div>
 
@@ -167,9 +223,6 @@
             </div>
 
 
-
-            <!--{{pagination.info}}-->
-            {{pagination.links}}
                 <table class="table table-hover">
                     <thead>
                         <tr>
@@ -196,16 +249,16 @@
                                 {% set cname_2 = 'fas fa-sort' %}
                             {% endif %}
                             </div>
-                            <th style="width : 15%" class="text-center">ID<button class="btn" id="id" onclick="order_text(id,'{{page}}')"><i class='{{cname_1}}'></i></button></th>
+                            <th style="width : 15%" class="text-center">ID<button class="btn" id="id" onclick="order_text(id)"><i class='{{cname_1}}'></i></button></th>
                             <th class="text-center">Act</th>
-                            <th style="width : 15%" class="text-center">Act Count<button class="btn" id="act_count" onclick="order_text(id,'{{page}}')"><i class='{{cname_2}}'></i></button></th>
+                            <th style="width : 15%" class="text-center">Act Count<button class="btn" id="act_count" onclick="order_text(id)"><i class='{{cname_2}}'></i></button></th>
                             <th style="width : 15%" class="text-center">Category</th>
                             <th style="width : 15%" class="text-center">Topic</th>
                             <th></th>
                         </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody id="act_board_id">
                     {% for row in board_total %}
                         <tr>
                             <td class="text-center">{{row.id}}</td>
@@ -223,7 +276,6 @@
 
                     </tbody>
                 </table>
-            {{pagination.links}}
 
 
         </div>
@@ -250,7 +302,7 @@
                             <input type="submit" class="btn btn-primary MyInputClass" data-dismiss="modal" value="예">
                             <input type="hidden" name="id" id="hidden_id" value="">
                             <input type="hidden" name="table_name" value="act">
-                            <input type="hidden" name="page" value="{{page}}">
+                            <!--<input type="hidden" name="page" value="{{page}}">-->
                         </form>
                     </div>
                 </div>

@@ -5,7 +5,47 @@
     <script language="JavaScript">
 
         $(document).ready(function(){
+            var sv_count = 1;
 
+            // ACT LIST 목록을 클릭하면
+            $(".MyActList").click(function(){
+                var act = $(this).text();
+
+                $.ajax({
+                   type:"POST",
+                   url:"/ajax_find_by_act",
+                   data:{'act' : act},
+                   success:function(res){
+                        var json_obj = JSON.parse(res);
+                        var act = json_obj['act'];
+                        var category = json_obj['category'];
+                        var topic = json_obj['topic'];
+
+                        $("#act_id").val(act);
+                        $("#cat_id").val(category);
+                        $("#top_id").val(topic);
+                   },
+                    error:function(error){
+                       alert("ERROR : " + error);
+                    }
+                });
+            });
+
+
+            // slot-value 추가 버튼을 클릭하면
+            $(".sv_add_btn").click(function(){
+                alert('!');
+                sv_count += 1;
+                $(".MySV").append('<input type="text" class="form-control mt-1" id="s_id_' + sv_count + '"> : <input type="text" class="form-control" id="v_id_' + sv_count + '"> <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_' + sv_count + '" type="button"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_' + sv_count + '" type="button"><i class="fas fa-minus"></i></button>');
+            });
+
+            // slot-value 삭제 버튼을 클릭하면
+            $(".sv_del_btn").click(function(){
+
+                //삭제하고 마이너스해야함
+                sv_count -= 1;
+
+            });
 
             // 모달창에서 '예'를 클릭하면
             $(".MyInputClass").click(function(){
@@ -19,7 +59,7 @@
 
             // '추가' 버튼을 클릭하면
             $("#speech_add_btn_id").click(function(){
-#######################################################################
+
             });
 
 
@@ -35,7 +75,7 @@
 
 
 
-        function order_text(id, page){
+        function order_text(id){
             // 1 이면 오름차순 정렬
             // 0 이면 내림차순 정렬
             var url = $(location).attr('href');
@@ -62,19 +102,19 @@
             // 검색한 경우 ordering
             if(search_msg){
                 if(inc_num){
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&page=" + page + "&search_msg=" + search_msg + "&inc_num=" + inc_num);
+                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&search_msg=" + search_msg + "&inc_num=" + inc_num);
                 }
                 else{
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&page=" + page + "&search_msg=" + search_msg);
+                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&search_msg=" + search_msg);
                 }
             }
             // 검색하지 않았을 경우 ordering
             else{
                 if(inc_num){
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&page=" + page + "&inc_num=" + inc_num);
+                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&inc_num=" + inc_num);
                 }
                 else{
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&page=" + page);
+                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering);
                 }
 
             }
@@ -135,7 +175,7 @@
     </li>
 
     <li class="nav-item active">
-        <a class="nav-link" href="{{url_for('text_board', page=1, col_name='sent_id', asc1_desc0=1)}}">User Speech Board</a>
+        <a class="nav-link" href="{{url_for('text_board', col_name='sent_id', asc1_desc0=1)}}">User Speech Board</a>
     </li>
 
     <li class="nav-item">
@@ -160,7 +200,7 @@
                 <div class="col-md-10">
                     <div class="form-group">
                         <input type="text" class="form-control col-md-12" id="SearchText" name="search_msg" placeholder="문장을 검색해주세요.">
-                        <input type="hidden" name="page" value="{{page}}">
+                        <!--<input type="hidden" name="page" value="{{page}}">-->
                     </div>
                 </div>
 
@@ -342,16 +382,17 @@
                                 </div>
 
                                 <div class="form-inline">
-                                    <div class="card-body">
+                                    <div class="card-body col-8">
                                         <div class="card-title font-weight-bold">Slot : Value</div>
 
                                         <div clsas="card-text">
-                                            <div class="col font-weight-bold">
-                                                <input type="text" class="form-control" id="s_id">
+                                            <div class="col font-weight-bold MySV">
+                                                <input type="text" class="form-control" id="s_id_1">
                                                 :
-                                                <input type="text" class="form-control" id="v_id">
+                                                <input type="text" class="form-control" id="v_id_1">
 
-                                                <button class="btn btn-outline-info" id="add_id" type="button">Add</button>
+                                                <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_1" type="button"><i class="fas fa-plus"></i></button>
+                                                <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_1" type="button"><i class="fas fa-minus"></i></button>
                                             </div>
                                         </div>
                                     </div>
@@ -368,10 +409,6 @@
                     </form>
                 </div>
 
-
-
-                <!--{{pagination.info}}-->
-                {{pagination.links}}
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -385,7 +422,7 @@
                                     {% set cname_1 = 'fas fa-sort' %}
                                 {% endif %}
                                 </div>
-                                <th style="width : 11%" class="text-center">ID<button class="btn" id="sent_id" onclick="order_text(id,'{{page}}')"><i class='{{cname_1}}'></i></button></th>
+                                <th style="width : 11%" class="text-center">ID<button class="btn" id="sent_id" onclick="order_text(id)"><i class='{{cname_1}}'></i></button></th>
                                 <th class="text-center">User Speech</th>
                                 <th style="width : 11%" class="text-center">Category</th>
                                 <th style="width : 15%" class="text-center">Topic</th>
@@ -448,7 +485,6 @@
 
                         </tbody>
                     </table>
-                {{pagination.links}}
 
 
             </div>
@@ -497,7 +533,7 @@
                             <input type="submit" class="btn btn-primary MyInputClass" data-dismiss="modal" value="예">
                             <input type="hidden" name="id" id="hidden_id" value="">
                             <input type="hidden" name="table_name" value="speech">
-                            <input type="hidden" name="page" value="{{page}}">
+                            <!--<input type="hidden" name="page" value="{{page}}">-->
                         </form>
                     </div>
                 </div>

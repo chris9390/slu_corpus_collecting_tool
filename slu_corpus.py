@@ -300,8 +300,8 @@ def reload_text_board(search_msg):
 
 
     # 공통 코드 ==========================================
-    page = request.args.get('page', type=int, default=1)
-    per_page = 10
+    #page = request.args.get('page', type=int, default=1)
+    #per_page = 10
 
     asc1_desc0 = request.args.get('asc1_desc0')
     col_name = request.args.get('col_name')
@@ -317,7 +317,7 @@ def reload_text_board(search_msg):
     # 4. 전체 문장
     # ===================================================
 
-
+    '''
     # 모든 기사에서 검색한 게시글 반환
     if search_msg is not None and article_id is None:
         print('기사 전체 검색')
@@ -460,9 +460,9 @@ def reload_text_board(search_msg):
                                sentence_board_type=sentence_board_type)
 
 
-
+    '''
     # 게시글 전체 반환
-    elif search_msg is None and article_id is None:
+    if search_msg is None and article_id is None:
         print('문장 전체')
         sentence_board_type = 4
 
@@ -522,7 +522,7 @@ def reload_text_board(search_msg):
         total_count = len(board_total)
 
 
-
+        '''
         pagination = Pagination(page=page,
                                 per_page=per_page,
                                 total=total_count,
@@ -530,13 +530,13 @@ def reload_text_board(search_msg):
                                 bs_version=4,
                                 alignment='center',
                                 show_single_page=True)
-
+        '''
 
         return render_template('text_board.html',
                                board_total=board_total,
                                user_id=user_id,
-                               pagination=pagination,
-                               page=page,
+                               #pagination=pagination,
+                               #page=page,
                                asc1_desc0=asc1_desc0,
                                col_name=col_name,
                                sid1_count=sid1_count,
@@ -582,35 +582,13 @@ def text_board():
             id = session['sent_id']
             original_text = db_helper.select_data_from_table_by_id('sent_original', 'SentenceTable', id)
 
-            #converted_list = NumberToWord(original_text)
-            #converted_text = "\n".join(converted_list)
 
-            page = request.args.get('page')
+            #page = request.args.get('page')
 
-            #return render_template('text_edit.html', original_text = original_text, converted_text = converted_text, page = page, user_id=user_id)
-            return render_template('text_edit.html', original_text=original_text, page=page,user_id=user_id)
+            return render_template('text_edit.html', original_text=original_text,user_id=user_id)
 
 
         id = session['sent_id']
-
-        sent_converted_count = db_helper.select_data_from_table_by_id('sent_converted_count','SentenceTable', id)
-        sent_converted_count = sent_converted_count + 1
-        db_helper.update_sent_converted_count(sent_converted_count, id)
-
-
-        if 'ambiguity' in request.form:
-            db_helper.update_sent_ambiguity(1, id)
-        else:
-            db_helper.update_sent_ambiguity(0, id)
-
-
-        # POST method 인 경우 값을 받아오는 방식
-        converted_text = request.form['CONVERTED']
-        converted_text_escaped = db_conn.escape_string(converted_text)
-
-        db_helper.update_sent_converted(converted_text_escaped, id)
-        db_helper.update_sent_modified_date(id)
-        db_helper.update_sent_confirm(id)
 
 
         return reload_text_board(search_msg)
@@ -757,7 +735,7 @@ def delete(board_type):
 
     #elif board_type == 'text_board':
     # POST method 받아오는 방법
-    page = request.form['page']
+    #page = request.form['page']
     id = request.form['id']
     table_name = request.form['table_name']
 
@@ -765,9 +743,9 @@ def delete(board_type):
     db_helper.delete_row_by_id(table_name, id)
 
     if table_name == 'act':
-        return redirect(url_for('act_manager', page=page))
+        return redirect(url_for('act_manager'))
     else:
-        return redirect(url_for('text_board', page=page))
+        return redirect(url_for('text_board'))
 
 
 
@@ -995,6 +973,9 @@ def act_manager():
     col_name = request.args.get('col_name')
     # ===================================================
 
+    rows_category = db_helper.select_table('category')
+    rows_topic = db_helper.select_table('topic')
+
     board_total = []
     rows_act = db_helper.select_table('act')
     for row_act in rows_act:
@@ -1015,6 +996,7 @@ def act_manager():
 
     total_count = len(board_total)
 
+    '''
     pagination = Pagination(page=page,
                             per_page=per_page,
                             total=total_count,
@@ -1022,57 +1004,106 @@ def act_manager():
                             bs_version=4,
                             alignment='center',
                             show_single_page=True)
+    '''
 
     return render_template('act_manager.html',
-                           pagination=pagination,
+                           #pagination=pagination,
                            board_total=board_total,
                            rows_act=rows_act,
-                           page=page)
+                           rows_category=rows_category)
+                           #page=page)
 
 
-@app.route('/act_create', methods=['POST'])
-def act_create():
-    db_conn = get_db()
-    db_helper = DB_Helper(db_conn)
 
-
-    page = request.args.get('page')
-    act = request.form['act']
-    category = request.form['category']
-    topic = request.form['topic']
-
-    ######################################################################################
-
-    return redirect(url_for('act_manager', page=page))
-
-
-@app.route('/ajax_find_cat_n_topic', methods=['POST'])
-def ajax_find_cat_n_topic():
+@app.route('/ajax_find_topic', methods=['POST'])
+def ajax_find_topic():
     db_conn = get_db()
     db_helper = DB_Helper(db_conn)
 
     res = {}
     res['success'] = True
 
-    # act_manager에서 ajax로 보낸 act값
+    # act_manager에서 ajax로 보낸 cat값
+    category = request.form['category']
+    category_id = 0
+
+    rows_category = db_helper.select_table('category')
+    for row_category in rows_category:
+        # 선택한 category에 해당하는 category id 찾기
+        if row_category['category'] == category:
+            category_id = row_category['id']
+            break
+
+    temp = []
+    rows_topic = db_helper.select_table('topic')
+    for row_topic in rows_topic:
+        # 선택한 category에 해당하는 topic들 선택
+        if row_topic['category_id'] == category_id:
+            temp.append(row_topic['topic'])
+
+
+    res['topic'] = temp
+    print(temp)
+
+    return json.dumps(res)
+
+
+
+@app.route('/ajax_add_act', methods=['POST'])
+def ajax_add_act():
+    db_conn = get_db()
+    db_helper = DB_Helper(db_conn)
+
+    res = {}
+    res['success'] = True
+
+    category = request.form['category']
+    rows_category = db_helper.select_rows_by_condition('category', 'category', category)
+    category_id = rows_category[0]['id']
+
+    topic = request.form['topic']
+    rows_topic = db_helper.select_rows_by_condition('topic', 'topic', topic)
+    topic_id = rows_topic[0]['id']
+
     act = request.form['act']
 
-    rows_act = db_helper.select_table('act')
-    for row_act in rows_act:
-        if row_act['act'] == act:
-            category_id = row_act['category_id']
-            row_category = db_helper.select_row_by_id('category', category_id)
-            res['category'] = row_category['category']
+    db_helper.insert_new_act(act, topic_id, category_id)
 
-            topic_id = row_act['topic_id']
-            row_topic = db_helper.select_row_by_id('topic', topic_id)
-            res['topic'] = row_topic['topic']
-
-            break
+    rows_act = db_helper.select_rows_by_condition('act', 'act', act)
+    act_id = rows_act[0]['id']
+    res['id'] = act_id
+    res['act'] = act
+    res['category'] = category
+    res['topic'] = topic
 
 
     return json.dumps(res)
 
+
+@app.route('/ajax_find_by_act', methods=['POST'])
+def ajax_find_by_act():
+    db_conn = get_db()
+    db_helper = DB_Helper(db_conn)
+
+    res = {}
+    res['success'] = True
+
+    act = request.form['act']
+    rows_act = db_helper.select_rows_by_condition('act', 'act', act)
+
+    topic_id = rows_act[0]['topic_id']
+    row_topic = db_helper.select_row_by_id('topic', topic_id)
+    topic = row_topic['topic']
+
+    category_id = rows_act[0]['category_id']
+    row_category = db_helper.select_row_by_id('category', category_id)
+    category = row_category['category']
+
+    res['act'] = act
+    res['category'] = category
+    res['topic'] = topic
+
+    return json.dumps(res)
 
 @app.route('/speech_create', methods=['POST'])
 def speech_create():
