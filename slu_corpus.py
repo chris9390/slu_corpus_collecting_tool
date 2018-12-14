@@ -514,7 +514,7 @@ def reload_text_board(search_msg):
                 slot_value.append(each_slot_value)
 
             temp['slot_value'] = slot_value
-
+            print(temp)
             # 각 row의 정보 삽입
             board_total.append(temp)
 
@@ -1104,6 +1104,95 @@ def ajax_find_by_act():
     res['topic'] = topic
 
     return json.dumps(res)
+
+
+@app.route('/ajax_add_speech', methods=['POST'])
+def ajax_add_speech():
+
+    db_conn = get_db()
+    db_helper = DB_Helper(db_conn)
+
+    res = {}
+    res['success'] = True
+
+    print(request.form)
+
+    act = request.form['act']
+    rows_act = db_helper.select_rows_by_condition('act', 'act', act)
+    act_id = rows_act[0]['id']
+
+    category = request.form['category']
+    topic = request.form['topic']
+    user_speech = request.form['user_speech']
+
+    # speech 추가
+    db_helper.insert_new_speech(user_speech, act_id)
+    rows_speech = db_helper.select_rows_by_condition('speech', 'speech', user_speech)
+    inserted_speech_id = rows_speech[0]['id']
+
+
+    # slot_value 는 JSON 문자열
+    slot_value = request.form['slot_value']
+
+    # 원래 형식인 리스트로 변환
+    slot_value = json.loads(slot_value)
+    for each in slot_value:
+        slot = list(each.items())[0][0]
+        value = list(each.items())[0][1]
+
+        # =========== 우선 slot 과 value 존재 여부 확인 =========== #
+        # slot이 존재하면
+        try:
+            rows_slot = db_helper.select_rows_by_condition('slot', 'slot', slot)
+            slot_id = rows_slot[0]['id']
+
+            # slot에 해당하는 후보 value들
+            rows_value = db_helper.select_rows_by_condition('slot_id', 'value', slot_id)
+            is_new_value = 1
+            for row_value in rows_value:
+                if row_value['value'] == value:
+                    is_new_value = 0
+                    value_id = row_value['id']
+                    break
+
+            # 기존에 없는 새로운 value 라면 추가
+            if is_new_value == 1:
+                db_helper.insert_new_value(value, slot_id)
+                rows_value = db_helper.select_rows_by_condition('slot_id', 'value', slot_id)
+                for row_value in rows_value:
+                    if row_value['value'] == value:
+                        value_id = row_value['id']
+
+
+        # 존재하지 않는 slot이면 slot과 value 각각 새로 추가
+        except:
+            # 새로운 slot 추가
+            db_helper.insert_new_slot(slot)
+            rows_slot = db_helper.select_rows_by_condition('slot','slot',slot)
+            slot_id = rows_slot[0]['id']
+            # 추가한 slot 에 새로운 value 추가
+            db_helper.insert_new_value(value, slot_id)
+            rows_value = db_helper.select_rows_by_condition('slot_id', 'value', slot_id)
+            value_id = rows_value[0]['id']
+        # =========== 우선 slot 과 value 존재 여부 확인 =========== #
+
+
+
+########################################### 여기부터 이어서!!!!!! ######################################################
+
+
+
+        # =========== 그 다음 slot-value 테이블에 slot-value 쌍 삽입 =========== #
+        db_helper.insert_new_slot_value(inserted_speech_id, slot_id, value_id)
+        # =========== 그 다음 slot-value 테이블에 slot-value 쌍 삽입 =========== #
+
+
+
+    return json.dumps(res)
+
+
+
+
 
 @app.route('/speech_create', methods=['POST'])
 def speech_create():

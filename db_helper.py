@@ -894,6 +894,43 @@ class DB_Helper:
         self.conn.commit()
         c.close()
 
+    def insert_new_slot_value(self, speech_id, slot_id, value_id):
+        c = self.conn.cursor()
+
+        sql = "INSERT INTO slot_value (speech_id, slot_id, value_id) VALUES (%s, %s, %s)" % (speech_id, slot_id, value_id)
+
+        c.execute(sql)
+        self.conn.commit()
+        c.close()
+
+    def insert_new_slot(self, slot):
+        c = self.conn.cursor()
+
+        sql = "INSERT INTO slot (slot) VALUES (%s)" % slot
+
+        c.execute(sql)
+        self.conn.commit()
+        c.close()
+
+    def insert_new_value(self, value, slot_id):
+        c = self.conn.cursor()
+
+        sql = "INSERT INTO value (value, slot_id) VALUES ('%s', %s)" % (value, slot_id)
+
+        c.execute(sql)
+        self.conn.commit()
+        c.close()
+
+
+    def insert_new_speech(self, speech, act_id):
+        c = self.conn.cursor()
+
+        sql = "INSERT INTO speech (speech, act_id) VALUES ('%s', %s)" % (speech, act_id)
+
+        c.execute(sql)
+        self.conn.commit()
+        c.close()
+
 
 
     def select_table(self, table_name):

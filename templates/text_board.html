@@ -32,33 +32,163 @@
             });
 
 
-            // slot-value 추가 버튼을 클릭하면
-            $(".sv_add_btn").click(function(){
-                alert('!');
-                sv_count += 1;
-                $(".MySV").append('<input type="text" class="form-control mt-1" id="s_id_' + sv_count + '"> : <input type="text" class="form-control" id="v_id_' + sv_count + '"> <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_' + sv_count + '" type="button"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_' + sv_count + '" type="button"><i class="fas fa-minus"></i></button>');
-            });
-
-            // slot-value 삭제 버튼을 클릭하면
-            $(".sv_del_btn").click(function(){
-
-                //삭제하고 마이너스해야함
-                sv_count -= 1;
-
-            });
-
-            // 모달창에서 '예'를 클릭하면
-            $(".MyInputClass").click(function(){
-
-                $(".MyFormClass").attr("method", "post");
-                $(".MyFormClass").attr("action", "/text_board/delete");
-                $(".MyFormClass").submit();
-            });
-
-
 
             // '추가' 버튼을 클릭하면
             $("#speech_add_btn_id").click(function(){
+
+                var act = $("#act_id").val();
+                var category = $("#cat_id").val();
+                var topic = $("#top_id").val();
+                var user_speech = $.trim($("#us_id").val());
+
+
+                if(act === ''){
+                    $.notify("ACT LIST 에서 액트를 선택해주세요."
+                        ,{
+                            type:'danger',
+                            delay:2000,
+                            animate: {
+                                    enter: 'animated bounceInDown',
+                                    exit: 'animated hinge'
+                            }
+                        });
+                }
+
+                if(user_speech === ''){
+                    $.notify("User Speech 를 입력해주세요."
+                        ,{
+                            type:'danger',
+                            delay:2000,
+                            animate: {
+                                    enter: 'animated bounceInDown',
+                                    exit: 'animated hinge'
+                            }
+                        });
+                }
+
+                // act와 user_speech 정보가 모두 입력이 되어 있다면
+                else if(act !== '' && user_speech !== '') {
+                    var is_slot_empty = 0;
+                    var error_flag = 0;
+                    var value_error_flag = 0;
+                    var cnt = 0;
+
+                    // slov-value 쌍 제대로 입력되어 있는지 확인
+                    $(".MySV").children('div').children('input').each(function(){
+
+                        var val = $.trim($(this).val());
+
+                        // slot
+                        if(cnt % 2 == 0){
+                            if(val === ''){
+                                is_slot_empty = 1;
+                            }
+                            else{
+                                is_slot_empty = 0;
+                            }
+                        }
+
+                        // value
+                        else{
+                            // slot은 값이 없는데 value가 값이 있는 경우
+                            if(val !== '' && is_slot_empty === 1){
+                                error_flag = 1;
+                                // break의 역할
+                                return false;
+                            }
+                            // slot에 값이 있는데 value가 비어있는 경우
+                            else if(val === '' && is_slot_empty === 0){
+                                error_flag = 1;
+                                return false;
+                            }
+                            // slot, value 다 값이 있는데 value 가 user speech에 없는 단어인 경우
+                            else if(val !== '' && is_slot_empty === 0){
+                                if(user_speech.includes(val) === false){
+                                    value_error_flag = 1;
+                                    return false;
+                                }
+                            }
+                        }
+
+
+                        cnt += 1;
+                    });
+
+
+                    if(error_flag === 1){
+                        $.notify("Slot : Value 를 다시 확인해주세요."
+                        ,{
+                            type:'danger',
+                            delay:2000,
+                            animate: {
+                                    enter: 'animated bounceInDown',
+                                    exit: 'animated hinge'
+                            }
+                        });
+                    }
+                    else if(value_error_flag === 1){
+                        $.notify("Value 는 User Speech 에 있는 단어여야 합니다."
+                        ,{
+                            type:'danger',
+                            delay:2000,
+                            animate: {
+                                    enter: 'animated bounceInDown',
+                                    exit: 'animated hinge'
+                            }
+                        });
+                    }
+                    else {
+                        cnt = 0;
+                        var sv_pair_list = new Array();
+                        var slot;
+
+                        // slov-value 값 저장
+                        $(".MySV").children('div').children('input').each(function () {
+
+                            var temp_obj = new Object();
+
+                            // 좌우 공백 제거
+                            var val = $.trim($(this).val());
+
+                            // 공백일땐 continue
+                            if(val === ''){
+                                // continue 역할
+                                return true;
+                            }
+
+                            // slot
+                            else if(cnt % 2 == 0){
+                                slot = val;
+                            }
+
+                            // value
+                            else{
+                                temp_obj[slot] = val;
+                                sv_pair_list.push(temp_obj);
+                            }
+
+
+                            cnt += 1;
+                        });
+
+                        alert(JSON.stringify(sv_pair_list));
+
+
+                        $.ajax({
+                            type:"POST",
+                            url:"/ajax_add_speech",
+                            data:{'act' : act, 'category' : category, 'topic' : topic, 'user_speech' : user_speech, 'slot_value' : JSON.stringify(sv_pair_list)},
+                            success:function(res){
+
+                            },
+                            error:function(error){
+                                alert('ERROR : ' + error);
+                            }
+                        });
+
+                    }
+
+                }
 
             });
 
@@ -151,6 +281,23 @@
                 }
             }
         }
+
+
+        function sv_add(){
+            //$(".MySV").append('<input type="text" class="form-control mt-1" id="s_id_' + sv_count + '"> : <input type="text" class="form-control" id="v_id_' + sv_count + '"> <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_' + sv_count + '" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_' + sv_count + '" type="button" onclick="sv_del();"><i class="fas fa-minus"></i></button>');
+            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success sv_add_btn" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
+
+            //sv_count += 1;
+        }
+
+
+
+        function modal_yes(){
+            $(".MyFormClass").attr("method", "post");
+            $(".MyFormClass").attr("action", "/text_board/delete");
+            $(".MyFormClass").submit();
+        }
+
     </script>
 
 
@@ -339,7 +486,7 @@
 
                                             <div clsas="card-text">
                                                 <div class="col font-weight-bold">
-                                                    <input type="text" class="form-control" id="act_id" placeholder="액트 입력">
+                                                    <input type="text" class="form-control" id="act_id" placeholder="ACT LIST에서 선택" disabled>
                                             </div>
                                         </div>
                                     </div>
@@ -350,7 +497,7 @@
 
                                         <div clsas="card-text">
                                             <div class="col font-weight-bold">
-                                                <input type="text" class="form-control" id="cat_id" placeholder="카테고리 입력">
+                                                <input type="text" class="form-control" id="cat_id" placeholder="" disabled>
                                             </div>
                                         </div>
                                     </div>
@@ -360,7 +507,7 @@
 
                                             <div clsas="card-text">
                                                 <div class="col font-weight-bold">
-                                                    <input type="text" class="form-control" id="top_id" placeholder="토픽 입력">
+                                                    <input type="text" class="form-control" id="top_id" placeholder="" disabled>
                                             </div>
                                         </div>
                                     </div>
@@ -374,7 +521,7 @@
                                         <div clsas="card-text">
                                             <div class="col-xl-12">
                                                 <div class="input-group font-weight-bold">
-                                                    <input type="text" class="form-control" id="us_id" placeholder="예상 발화문 입력">
+                                                    <input type="text" class="form-control" id="us_id" placeholder="예상 발화문 입력" value="">
                                                 </div>
                                             </div>
                                         </div>
@@ -387,12 +534,18 @@
 
                                         <div clsas="card-text">
                                             <div class="col font-weight-bold MySV">
-                                                <input type="text" class="form-control" id="s_id_1">
-                                                :
-                                                <input type="text" class="form-control" id="v_id_1">
+                                                <div>
+                                                    <input type="text" class="form-control" id="s_id_1" value="">
+                                                    :
+                                                    <input type="text" class="form-control" id="v_id_1" value="">
 
-                                                <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_1" type="button"><i class="fas fa-plus"></i></button>
-                                                <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_1" type="button"><i class="fas fa-minus"></i></button>
+                                                    <!--
+                                                    <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_1" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button>
+                                                    <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_1" type="button" onclick="sv_del();"><i class="fas fa-minus"></i></button>
+                                                    -->
+                                                    <button class="btn btn-success sv_add_btn" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button>
+                                                    <button class="btn btn-warning sv_del_btn" type="button" onclick="sv_del();"><i class="fas fa-minus"></i></button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -422,59 +575,32 @@
                                     {% set cname_1 = 'fas fa-sort' %}
                                 {% endif %}
                                 </div>
-                                <th style="width : 11%" class="text-center">ID<button class="btn" id="sent_id" onclick="order_text(id)"><i class='{{cname_1}}'></i></button></th>
+                                <th style="width : 7%" class="text-center">ID<button class="btn" id="sent_id" onclick="order_text(id)"><i class='{{cname_1}}'></i></button></th>
                                 <th class="text-center">User Speech</th>
                                 <th style="width : 11%" class="text-center">Category</th>
                                 <th style="width : 15%" class="text-center">Topic</th>
                                 <th style="width : 15%" class="text-center">Act</th>
-                                <th style="width : 11%" class="text-center">Slot : Value</th>
+                                <th style="width : 20%" class="text-center">Slot : Value</th>
                                 <th></th>
                             </tr>
                         </thead>
 
                         <tbody>
                         {% for row in board_total %}
-                            <tr>
-                                <td class="text-center">{{row.sent_id}}</td>
-
-                                {% if is_all_sents is defined %}
-                                    {% set add_behind = "&is_all_sents=1" %}
-                                {% else %}
-                                    {% set add_behind = "" %}
-                                {% endif %}
-
-                                {% if row.sent_confirm == 1 %}
-                                <td>
-                                    {% if search_msg is defined %}
-                                        <a href="/text_board/edit?article_id={{row.ArticleTable_article_id}}&sent_id={{row.sent_id}}&page={{page}}&search_msg={{search_msg}}{{add_behind}}">{{row.sent_converted}}</a>
-                                    {% else %}
-                                        <a href="/text_board/edit?article_id={{row.ArticleTable_article_id}}&sent_id={{row.sent_id}}&page={{page}}{{add_behind}}">{{row.sent_converted}}</a>
-                                    {% endif %}
+                            <tr style="border-bottom:2px solid black;">
+                                <td class="text-center">{{row.id}}</td>
+                                <td class="text-center">{{row.speech}}</td>
+                                <td class="text-center">{{row.category}}</td>
+                                <td class="text-center">{{row.topic}}</td>
+                                <td class="text-center">{{row.act}}</td>
+                                <td class="text-center">
+                                {% for each_dict in row.slot_value %}
+                                    {% for key, value in each_dict.items() %}
+                                        {{key}} : {{value}}
+                                        <hr style="border-style:dotted; border-color:#808080;">
+                                    {% endfor %}
+                                {% endfor %}
                                 </td>
-                                {% else %}
-                                <td>
-                                    {% if search_msg is defined %}
-                                        <a href="/text_board/edit?article_id={{row.ArticleTable_article_id}}&sent_id={{row.sent_id}}&page={{page}}&search_msg={{search_msg}}{{add_behind}}">{{row.sent_original}}</a>
-                                    {% else %}
-                                        <a href="/text_board/edit?article_id={{row.ArticleTable_article_id}}&sent_id={{row.sent_id}}&page={{page}}{{add_behind}}">{{row.sent_original}}</a>
-                                    {% endif %}
-                                </td>
-                                {% endif %}
-
-                                <td class="text-center">{{row.article_id}}</td>
-                                {% if row.article_collected_date|string == '1900-01-01 00:00:00' %}
-                                    <td class="text-center">-</td>
-                                {% else %}
-                                    <td class="text-center">{{row.article_collected_date}}</td>
-                                {% endif %}
-
-                                {% if row.sent_modified_date|string == '1900-01-01 00:00:00' %}
-                                    <td class="text-center">-</td>
-                                {% else %}
-                                    <td class="text-center">{{row.sent_modified_date}}</td>
-                                {% endif %}
-
-                                <td class="text-center">{{row.sent_converted_count}}</td>
 
                                 <td class="text-center">
                                     <input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal('{{row.id}}')" value="삭제">
@@ -530,7 +656,7 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>
                         <form class="MyFormClass">
-                            <input type="submit" class="btn btn-primary MyInputClass" data-dismiss="modal" value="예">
+                            <input type="submit" class="btn btn-primary MyInputClass" data-dismiss="modal" value="예" onclick="modal_yes();">
                             <input type="hidden" name="id" id="hidden_id" value="">
                             <input type="hidden" name="table_name" value="speech">
                             <!--<input type="hidden" name="page" value="{{page}}">-->

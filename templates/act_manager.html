@@ -7,15 +7,6 @@
 
         $(document).ready(function(){
 
-           // 모달창에서 '예'를 클릭하면
-            $(".MyInputClass").click(function(){
-
-                $(".MyFormClass").attr("method", "post");
-                $(".MyFormClass").attr("action", "/text_board/delete");
-                $(".MyFormClass").submit();
-            });
-
-
             // category 하나 선택하거나 직접 입력하면
             $("#cat_id").change(function(){
                 $("#top_id").val("");
@@ -49,13 +40,14 @@
 
             // '추가' 버튼을 누르면
             $("#act_add_btn_id").click(function(){
-                var category = $("#cat_id").val();
-                var topic = $("#top_id").val();
-                var act = $("#act_id").val();
+                var category = $.trim($("#cat_id").val());
+                var topic = $.trim($("#top_id").val());
+                var act = $.trim($("#act_id").val());
+                $("#act_id").val("");
 
-                if(category == "" || topic == "" || act == ""){
+                if(category === "" || topic === "" || act === ""){
 
-                    $.notify("Category, Topic, Act를 모두 입력해주세요."
+                    $.notify("Category, Topic, Act 를 모두 입력해주세요."
                     ,{
                         type : 'danger',
                         delay : 2000,
@@ -77,11 +69,37 @@
                             var category = json_obj['category'];
                             var topic = json_obj['topic'];
                             var act_count = 0;
-                            alert(id);
-                            $("#act_list_id").append('<li class="list-group-item"><a href="#">' + act + '</a><span class="badge badge-pill badge-info float-right">' + act_count + '</span></li>');
-                            $("#act_board_id").prepend('<tr><td class="text-center">' + id + '</td><td class="text-center">' + act + '</td><td class="text-center">' + act_count + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal(' + "'" + id + "'" + ')" value="삭제"></td></tr>');
 
-                            $.notify("Act가 추가되었습니다."
+                            $("#act_list_id").append('<li class="list-group-item list-group-item-success"><a href="#">' + act + '</a><span class="badge badge-pill badge-info float-right">' + act_count + '</span></li>');
+                            $("#act_board_id").prepend('<tr class="table-success"><td class="text-center">' + id + '</td><td class="text-center">' + act + '</td><td class="text-center">' + act_count + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal(' + "'" + id + "'" + ')" value="삭제"></td></tr>');
+
+                            // 추가한 act에 대한 모달창 생성
+                            $(".container-fluid").append(
+                                '<div id="myModal' + id + '" class="modal fade" role="dialog">\n' +
+                                '            <div class="modal-dialog modal-sm">\n' +
+                                '                <div class="modal-content">\n' +
+                                '                    <div class="modal-header">\n' +
+                                '                        <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i>경고</h4>\n' +
+                                '                        <button type="button" class="close" data-dismiss="modal">&times;</button>\n' +
+                                '                    </div>\n' +
+                                '\n' +
+                                '                    <div class="modal-body">\n' +
+                                '                        <p>' + id + '번 액트를 정말 삭제하시겠습니까?</p>\n' +
+                                '                    </div>\n' +
+                                '\n' +
+                                '                    <div class="modal-footer">\n' +
+                                '                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>\n' +
+                                '                        <form class="MyFormClass">\n' +
+                                '                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes()">\n' +
+                                '                            <input type="hidden" name="id" id="hidden_id" value="">\n' +
+                                '                            <input type="hidden" name="table_name" value="act">\n' +
+                                '                        </form>\n' +
+                                '                    </div>\n' +
+                                '                </div>\n' +
+                                '            </div>\n' +
+                                '        </div>');
+
+                            $.notify("Act 가 추가되었습니다."
                             ,{
                                 type : 'success',
                                 delay : 2000,
@@ -106,9 +124,35 @@
         });
 
         function trigger_modal(id){
-            alert(id);
             $(".modal-footer #hidden_id").val(id);
             $("#myModal" + id).modal();
+        }
+
+
+        function modal_yes(){
+            $(".MyFormClass").attr("method", "post");
+            $(".MyFormClass").attr("action", "/text_board/delete");
+            $(".MyFormClass").submit();
+        }
+
+        function remove_input(id){
+
+            if(id == 'cat_id'){
+                alert('cat del');
+                $("#cat_id").val("");
+                $("#top_id").val("");
+                $("#act_id").val("");
+            }
+            else if(id == 'top_id'){
+                alert('top del');
+                $("#top_id").val("");
+                $("#act_id").val("");
+            }
+            else if(id == 'act_id'){
+                alert('act del');
+                $("#act_id").val("");
+            }
+
         }
     </script>
 
@@ -162,7 +206,8 @@
         <div class="col">
 
             <div class="card border-dark my-2">
-                <form id="act_add_frm_id">
+                <!--<form id="act_add_frm_id">-->
+
                     <div class="row">
                         <div class="col">
                             <div class="form-inline">
@@ -171,55 +216,62 @@
                                     <div class="card-title font-weight-bold">Category</div>
 
                                     <div clsas="card-text">
-                                        <div class="col font-weight-bold">
-                                            <input list="cat_list" id="cat_id" name="cat">
+                                        <div class="row mx-auto">
+                                            <input class="mr-1 form-control" list="cat_list" id="cat_id" name="cat">
                                                 <datalist id="cat_list">
                                                     {% for row_category in rows_category %}
                                                         <option value="{{row_category.category}}">
                                                     {% endfor %}
                                                 </datalist>
+                                            <button class="btn btn-sm btn-danger" onclick="remove_input('cat_id');"><i class="fas fa-backspace"></i></button>
                                         </div>
                                     </div>
                                 </div>
+
+                                <i class="fas fa-arrow-circle-right fa-3x mr-2"></i>
+
 
 
                                 <div class="card-body">
                                         <div class="card-title font-weight-bold">Topic</div>
 
                                         <div clsas="card-text">
-                                            <div class="col font-weight-bold">
-                                                <input list="top_list" id="top_id" name="act">
+                                            <div class="row mx-auto">
+                                                <input class="mr-1 form-control" list="top_list" id="top_id" name="act">
                                                 <datalist id="top_list">
                                                 </datalist>
+                                                <button class="btn btn-sm btn-danger" onclick="remove_input('top_id');"><i class="fas fa-backspace"></i></button>
+                                            </div>
                                         </div>
-                                    </div>
                                 </div>
+
+
+                                <i class="fas fa-arrow-circle-right fa-3x mr-2"></i>
 
 
                                 <div class="card-body">
                                         <div class="card-title font-weight-bold">Act</div>
 
                                         <div clsas="card-text">
-                                            <div class="col font-weight-bold">
-                                                <input type="text" id="act_id" name="act">
+                                            <div class="row mx-auto">
+                                                <input class="mr-1 form-control" type="text" id="act_id" name="act">
+                                                <button class="btn btn-sm btn-danger" onclick="remove_input('act_id');"><i class="fas fa-backspace"></i></button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-
                             </div>
 
-
-                        </div>
 
                         <div class="col-2">
                             <input type="button" class="btn btn-block btn-primary font-weight-bold" style="height:100%" id="act_add_btn_id" value="추가">
                         </div>
+
+
                     </div>
 
-
-
-                </form>
+                <!--</form>-->
             </div>
 
 
@@ -249,7 +301,7 @@
                                 {% set cname_2 = 'fas fa-sort' %}
                             {% endif %}
                             </div>
-                            <th style="width : 15%" class="text-center">ID<button class="btn" id="id" onclick="order_text(id)"><i class='{{cname_1}}'></i></button></th>
+                            <th style="width : 7%" class="text-center">ID<button class="btn" id="id" onclick="order_text(id)"><i class='{{cname_1}}'></i></button></th>
                             <th class="text-center">Act</th>
                             <th style="width : 15%" class="text-center">Act Count<button class="btn" id="act_count" onclick="order_text(id)"><i class='{{cname_2}}'></i></button></th>
                             <th style="width : 15%" class="text-center">Category</th>
@@ -260,7 +312,7 @@
 
                     <tbody id="act_board_id">
                     {% for row in board_total %}
-                        <tr>
+                        <tr style="border-bottom:2px solid black;">
                             <td class="text-center">{{row.id}}</td>
                             <td class="text-center">{{row.act}}</td>
                             <td class="text-center">{{row.act_count}}</td>
@@ -299,10 +351,9 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>
                         <form class="MyFormClass">
-                            <input type="submit" class="btn btn-primary MyInputClass" data-dismiss="modal" value="예">
+                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes()">
                             <input type="hidden" name="id" id="hidden_id" value="">
                             <input type="hidden" name="table_name" value="act">
-                            <!--<input type="hidden" name="page" value="{{page}}">-->
                         </form>
                     </div>
                 </div>
