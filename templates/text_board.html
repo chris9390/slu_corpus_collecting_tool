@@ -5,7 +5,6 @@
     <script language="JavaScript">
 
         $(document).ready(function(){
-            var sv_count = 1;
 
             // ACT LIST 목록을 클릭하면
             $(".MyActList").click(function(){
@@ -298,6 +297,19 @@
             $(".MyFormClass").submit();
         }
 
+
+        function reset_all(){
+            $("#act_id").val("");
+            $("#cat_id").val("");
+            $("#top_id").val("");
+            $("#us_id").val("");
+
+            // slot value의 모든 자식 요소 삭제하고
+            $(".MySV").children('div').remove();
+            // 하나만 새로 추가
+            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success sv_add_btn" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
+        }
+
     </script>
 
 
@@ -553,7 +565,15 @@
                             </div>
 
                             <div class="col-2">
-                                <input type="button" class="btn btn-block btn-primary font-weight-bold" id="speech_add_btn_id" style="height:100%" value="추가">
+
+                                <div class="flex-row" style="height:80%">
+                                    <input type="button" class="btn btn-block btn-primary font-weight-bold" id="speech_add_btn_id" style="height:100%" value="추가">
+                                </div>
+
+                                <div class="flex-row" style="height:20%">
+                                    <input type="button" class="btn btn-block btn-danger font-weight-bold" id="" value="초기화" style="height:100%" onclick="reset_all()">
+                                </div>
+
                             </div>
                         </div>
 

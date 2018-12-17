@@ -138,21 +138,24 @@
         function remove_input(id){
 
             if(id == 'cat_id'){
-                alert('cat del');
                 $("#cat_id").val("");
                 $("#top_id").val("");
                 $("#act_id").val("");
             }
             else if(id == 'top_id'){
-                alert('top del');
                 $("#top_id").val("");
                 $("#act_id").val("");
             }
             else if(id == 'act_id'){
-                alert('act del');
                 $("#act_id").val("");
             }
 
+        }
+
+        function reset_all(){
+            $("#cat_id").val("");
+            $("#top_id").val("");
+            $("#act_id").val("");
         }
     </script>
 
@@ -265,7 +268,15 @@
 
 
                         <div class="col-2">
-                            <input type="button" class="btn btn-block btn-primary font-weight-bold" style="height:100%" id="act_add_btn_id" value="추가">
+
+                            <div class="flex-row" style="height:70%">
+                                <input type="button" class="btn btn-block btn-primary font-weight-bold" style="height:100%" id="act_add_btn_id" value="추가">
+                            </div>
+
+                            <div class="flex-row" style="height:30%">
+                                <input type="button" class="btn btn-block btn-danger font-weight-bold" style="height:100%" id="" value="초기화" onclick="reset_all()">
+                            </div>
+
                         </div>
 
 
