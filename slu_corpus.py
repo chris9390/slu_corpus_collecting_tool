@@ -736,15 +736,30 @@ def delete(board_type):
     #elif board_type == 'text_board':
     # POST method 받아오는 방법
     #page = request.form['page']
+
+
     id = request.form['id']
     table_name = request.form['table_name']
 
-    # 해당 id 삭제
-    db_helper.delete_row_by_id(table_name, id)
 
     if table_name == 'act':
-        return redirect(url_for('act_manager'))
-    else:
+        # act 테이블의 해당 id 삭제
+        try:
+            db_helper.delete_row_by_id('act', id)
+            return redirect(url_for('act_manager'))
+        # 자식을 먼저 삭제하라는 pymysql 에러가 발생하면
+        except:
+            return redirect(url_for('act_manager', delete_error=1))
+
+    elif table_name == 'speech':
+        row_speech = db_helper.select_row_by_id('speech', id)
+        # 삭제할 speech의 act_id
+        act_id = row_speech['act_id']
+        # act_count 1 감소
+        db_helper.update_act_count(act_id, 0)
+        # speech 테이블의 해당 id 삭제 (speech를 삭제하면 slot_value 테이블의 해당 speech_id인 row들도 같이 삭제되도록 on delete cascade 설정해 놓았다.)
+        db_helper.delete_row_by_id('speech', id)
+
         return redirect(url_for('text_board'))
 
 
@@ -965,6 +980,8 @@ def act_manager():
     db_conn = get_db()
     db_helper = DB_Helper(db_conn)
 
+    is_delete_error = request.args.get('delete_error')
+
     # 공통 코드 ==========================================
     page = request.args.get('page', type=int, default=1)
     per_page = 10
@@ -1010,7 +1027,8 @@ def act_manager():
                            #pagination=pagination,
                            board_total=board_total,
                            rows_act=rows_act,
-                           rows_category=rows_category)
+                           rows_category=rows_category,
+                           is_delete_error=is_delete_error)
                            #page=page)
 
 
@@ -1056,16 +1074,52 @@ def ajax_add_act():
 
     res = {}
     res['success'] = True
+    res['act_overlap'] = False
 
     category = request.form['category']
     rows_category = db_helper.select_rows_by_condition('category', 'category', category)
-    category_id = rows_category[0]['id']
+    # 새로운 category가 입력되면 새로 추가
+    if len(rows_category) == 0:
+        db_helper.insert_new_category(category)
+        rows_category = db_helper.select_rows_by_condition('category', 'category', category)
+        # 새로 등록된 category의 id
+        category_id = rows_category[0]['id']
+    else:
+        # 기존 category의 id
+        category_id = rows_category[0]['id']
 
     topic = request.form['topic']
-    rows_topic = db_helper.select_rows_by_condition('topic', 'topic', topic)
-    topic_id = rows_topic[0]['id']
+    topic_id = 0
+
+    # 선택한 category에 해당하는 topic들
+    rows_topic = db_helper.select_rows_by_condition('category_id', 'topic', category_id)
+    is_exist_topic = 0
+    for row_topic in rows_topic:
+        # 이미 topic이 존재한다면
+        if row_topic['topic'] == topic:
+            is_exist_topic = 1
+            topic_id = row_topic['id']
+            break
+
+    # 새로운 topic이 입력되면 새로 추가
+    if is_exist_topic == 0:
+        db_helper.insert_new_topic(topic, category_id)
+        rows_topic = db_helper.select_rows_by_condition('category_id', 'topic', category_id)
+        for row_topic in rows_topic:
+            if row_topic['topic'] == topic:
+                topic_id = row_topic['id']
+                break
+
 
     act = request.form['act']
+
+    # act 중복 검사
+    rows_act = db_helper.select_rows_by_condition('act', 'act', act)
+    # 중복이라면 중복 알림
+    if len(rows_act) > 0:
+        res['is_act_overlapped'] = True
+        return json.dumps(res)
+
 
     db_helper.insert_new_act(act, topic_id, category_id)
 
@@ -1120,6 +1174,8 @@ def ajax_add_speech():
     act = request.form['act']
     rows_act = db_helper.select_rows_by_condition('act', 'act', act)
     act_id = rows_act[0]['id']
+    res['act_count'] = rows_act[0]['act_count']
+
 
     category = request.form['category']
     topic = request.form['topic']
@@ -1131,6 +1187,11 @@ def ajax_add_speech():
     inserted_speech_id = rows_speech[0]['id']
 
 
+    # 추가한 speech에 해당하는 act의 act_count 1 증가
+    db_helper.update_act_count(act_id, 1)
+
+
+
     # slot_value 는 JSON 문자열
     slot_value = request.form['slot_value']
 
@@ -1140,7 +1201,10 @@ def ajax_add_speech():
         slot = list(each.items())[0][0]
         value = list(each.items())[0][1]
 
-        # =========== 우선 slot 과 value 존재 여부 확인 =========== #
+        # 초기화
+        value_id = 0
+
+        # ================ 우선 slot 과 value 존재 여부에 따른 처리 ================ #
         # slot이 존재하면
         try:
             rows_slot = db_helper.select_rows_by_condition('slot', 'slot', slot)
@@ -1150,6 +1214,7 @@ def ajax_add_speech():
             rows_value = db_helper.select_rows_by_condition('slot_id', 'value', slot_id)
             is_new_value = 1
             for row_value in rows_value:
+                # 이미 등록된 value
                 if row_value['value'] == value:
                     is_new_value = 0
                     value_id = row_value['id']
@@ -1169,34 +1234,29 @@ def ajax_add_speech():
             # 새로운 slot 추가
             db_helper.insert_new_slot(slot)
             rows_slot = db_helper.select_rows_by_condition('slot','slot',slot)
+            # 새로 추가한 slot의 id
             slot_id = rows_slot[0]['id']
-            # 추가한 slot 에 새로운 value 추가
+            # 새로 추가한 slot 에 해당하는 새로운 value 추가
             db_helper.insert_new_value(value, slot_id)
             rows_value = db_helper.select_rows_by_condition('slot_id', 'value', slot_id)
             value_id = rows_value[0]['id']
-        # =========== 우선 slot 과 value 존재 여부 확인 =========== #
+        # ================ 우선 slot 과 value 존재 여부에 따른 처리 ================ #
 
 
 
-########################################### 여기부터 이어서!!!!!! ######################################################
 
 
+        # ================ 그 다음 slot-value 테이블에 slot-value 쌍 삽입 ================ #
 
-        # =========== 그 다음 slot-value 테이블에 slot-value 쌍 삽입 =========== #
         db_helper.insert_new_slot_value(inserted_speech_id, slot_id, value_id)
-        # =========== 그 다음 slot-value 테이블에 slot-value 쌍 삽입 =========== #
+
+        # ================ 그 다음 slot-value 테이블에 slot-value 쌍 삽입 ================ #
 
 
 
     return json.dumps(res)
 
 
-
-
-
-@app.route('/speech_create', methods=['POST'])
-def speech_create():
-    print('1')
 
 
 

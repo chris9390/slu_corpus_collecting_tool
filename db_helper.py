@@ -885,6 +885,26 @@ class DB_Helper:
     # ===============================================================================================
     # ===============================================================================================
 
+    def insert_new_category(self, category):
+        c = self.conn.cursor()
+
+        sql = "INSERT INTO category (category, domain_id) VALUES ('%s', 1)" % category
+
+        c.execute(sql)
+        self.conn.commit()
+        c.close()
+
+
+    def insert_new_topic(self, topic, category_id):
+        c = self.conn.cursor()
+
+        sql = "INSERT INTO topic (topic, category_id) VALUES ('%s', %s)" % (topic, category_id)
+
+        c.execute(sql)
+        self.conn.commit()
+        c.close()
+
+
     def insert_new_act(self, act, topic_id, category_id):
         c = self.conn.cursor()
 
@@ -906,7 +926,7 @@ class DB_Helper:
     def insert_new_slot(self, slot):
         c = self.conn.cursor()
 
-        sql = "INSERT INTO slot (slot) VALUES (%s)" % slot
+        sql = "INSERT INTO slot (slot) VALUES ('%s')" % slot
 
         c.execute(sql)
         self.conn.commit()
@@ -968,6 +988,25 @@ class DB_Helper:
         rows = c.fetchall()
         c.close()
         return rows
+
+
+
+    def update_act_count(self, act_id, desc0_inc1):
+        c = self.conn.cursor()
+
+        if desc0_inc1 == 0:
+            sql = "UPDATE act SET act_count = act_count - 1 WHERE id = %s" % act_id
+        elif desc0_inc1 == 1:
+            sql = "UPDATE act SET act_count = act_count + 1 WHERE id = %s" % act_id
+        else:
+            print("???????????")
+
+
+        c.execute(sql)
+        self.conn.commit()
+
+        c.close()
+
 
 
     def delete_row_by_id(self, table_name, id):

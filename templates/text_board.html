@@ -138,13 +138,13 @@
                     }
                     else {
                         cnt = 0;
-                        var sv_pair_list = new Array();
+                        var sv_pair_list = [];
                         var slot;
 
                         // slov-value 값 저장
                         $(".MySV").children('div').children('input').each(function () {
 
-                            var temp_obj = new Object();
+                            var temp_obj = {};
 
                             // 좌우 공백 제거
                             var val = $.trim($(this).val());
@@ -173,12 +173,27 @@
                         alert(JSON.stringify(sv_pair_list));
 
 
+                        var i = 0;
+                        for(i = 0 ; i < sv_pair_list.length ; i++){
+                            for(var key in sv_pair_list[i]){
+                                alert(key);
+                                alert(sv_pair_list[i][key]);
+                            }
+                        }
+
+
+
+
                         $.ajax({
                             type:"POST",
                             url:"/ajax_add_speech",
                             data:{'act' : act, 'category' : category, 'topic' : topic, 'user_speech' : user_speech, 'slot_value' : JSON.stringify(sv_pair_list)},
                             success:function(res){
-
+                                var json_obj = JSON.parse(res);
+                                var act_count = json_obj['act_count'];
+                                $("#act_list_id").children('div').children('li').children('a').each(function(){
+                                    alert($(this).val());
+                                });
                             },
                             error:function(error){
                                 alert('ERROR : ' + error);
@@ -284,7 +299,7 @@
 
         function sv_add(){
             //$(".MySV").append('<input type="text" class="form-control mt-1" id="s_id_' + sv_count + '"> : <input type="text" class="form-control" id="v_id_' + sv_count + '"> <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_' + sv_count + '" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_' + sv_count + '" type="button" onclick="sv_del();"><i class="fas fa-minus"></i></button>');
-            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success sv_add_btn" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
+            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
 
             //sv_count += 1;
         }
@@ -293,7 +308,7 @@
 
         function modal_yes(){
             $(".MyFormClass").attr("method", "post");
-            $(".MyFormClass").attr("action", "/text_board/delete");
+            $(".MyFormClass").attr("action", "/user_speech_board/delete");
             $(".MyFormClass").submit();
         }
 
@@ -307,7 +322,7 @@
             // slot value의 모든 자식 요소 삭제하고
             $(".MySV").children('div').remove();
             // 하나만 새로 추가
-            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success sv_add_btn" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
+            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
         }
 
     </script>
@@ -358,7 +373,7 @@
             <form class="form-inline my-2" id="frm" role="search">
                 <div class="col-md-10">
                     <div class="form-group">
-                        <input type="text" class="form-control col-md-12" id="SearchText" name="search_msg" placeholder="문장을 검색해주세요.">
+                        <input type="text" class="form-control col-md-12" id="SearchText" name="search_msg" placeholder="문장을 검색해주세요." disabled>
                         <!--<input type="hidden" name="page" value="{{page}}">-->
                     </div>
                 </div>
@@ -555,8 +570,8 @@
                                                     <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_1" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button>
                                                     <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_1" type="button" onclick="sv_del();"><i class="fas fa-minus"></i></button>
                                                     -->
-                                                    <button class="btn btn-success sv_add_btn" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button>
-                                                    <button class="btn btn-warning sv_del_btn" type="button" onclick="sv_del();"><i class="fas fa-minus"></i></button>
+                                                    <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button>
+                                                    <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -607,7 +622,7 @@
 
                         <tbody>
                         {% for row in board_total %}
-                            <tr style="border-bottom:2px solid black;">
+                            <tr>
                                 <td class="text-center">{{row.id}}</td>
                                 <td class="text-center">{{row.speech}}</td>
                                 <td class="text-center">{{row.category}}</td>
@@ -616,8 +631,9 @@
                                 <td class="text-center">
                                 {% for each_dict in row.slot_value %}
                                     {% for key, value in each_dict.items() %}
+                                        <div style="border: 1px dashed;">
                                         {{key}} : {{value}}
-                                        <hr style="border-style:dotted; border-color:#808080;">
+                                        </div>
                                     {% endfor %}
                                 {% endfor %}
                                 </td>
@@ -662,7 +678,7 @@
         {% for row in board_total %}
         <!-- Modal -->
         <div id="myModal{{row.id}}" class="modal fade" role="dialog">
-            <div class="modal-dialog modal-sm">
+            <div class="modal-dialog" style="width:30%">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i>경고</h4>
