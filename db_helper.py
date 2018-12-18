@@ -990,6 +990,17 @@ class DB_Helper:
         return rows
 
 
+    def select_latest_row(self, table_name):
+        c = self.conn.cursor()
+
+        sql = "SELECT * FROM %s ORDER BY id DESC LIMIT 1" % table_name
+
+        c.execute(sql)
+
+        row = c.fetchone()
+        c.close()
+        return row
+
 
     def update_act_count(self, act_id, desc0_inc1):
         c = self.conn.cursor()

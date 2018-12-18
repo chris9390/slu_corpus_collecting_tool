@@ -722,21 +722,6 @@ def delete(board_type):
     print(request.url)
     print(request.method)
 
-    '''
-    if board_type == 'article_board':
-        # POST method 받아오는 방법
-        page = request.form['page']
-        article_id = request.form['article_id']
-
-        # 해당 article_id 삭제
-        db_helper.delete_by_id('ArticleTable', article_id)
-        return redirect(url_for('article_board', page=page))
-    '''
-
-    #elif board_type == 'text_board':
-    # POST method 받아오는 방법
-    #page = request.form['page']
-
 
     id = request.form['id']
     table_name = request.form['table_name']
@@ -752,15 +737,17 @@ def delete(board_type):
             return redirect(url_for('act_manager', delete_error=1))
 
     elif table_name == 'speech':
-        row_speech = db_helper.select_row_by_id('speech', id)
-        # 삭제할 speech의 act_id
-        act_id = row_speech['act_id']
-        # act_count 1 감소
-        db_helper.update_act_count(act_id, 0)
-        # speech 테이블의 해당 id 삭제 (speech를 삭제하면 slot_value 테이블의 해당 speech_id인 row들도 같이 삭제되도록 on delete cascade 설정해 놓았다.)
-        db_helper.delete_row_by_id('speech', id)
-
-        return redirect(url_for('text_board'))
+        try:
+            row_speech = db_helper.select_row_by_id('speech', id)
+            # 삭제할 speech의 act_id
+            act_id = row_speech['act_id']
+            # act_count 1 감소
+            db_helper.update_act_count(act_id, 0)
+            # speech 테이블의 해당 id 삭제 (speech를 삭제하면 slot_value 테이블의 해당 speech_id인 row들도 같이 삭제되도록 on delete cascade 설정해 놓았다.)
+            db_helper.delete_row_by_id('speech', id)
+            return redirect(url_for('text_board'))
+        except:
+            return redirect(url_for('text_board'))
 
 
 
@@ -1174,7 +1161,6 @@ def ajax_add_speech():
     act = request.form['act']
     rows_act = db_helper.select_rows_by_condition('act', 'act', act)
     act_id = rows_act[0]['id']
-    res['act_count'] = rows_act[0]['act_count']
 
 
     category = request.form['category']
@@ -1183,13 +1169,14 @@ def ajax_add_speech():
 
     # speech 추가
     db_helper.insert_new_speech(user_speech, act_id)
-    rows_speech = db_helper.select_rows_by_condition('speech', 'speech', user_speech)
-    inserted_speech_id = rows_speech[0]['id']
-
+    row_speech = db_helper.select_latest_row('speech')
+    inserted_speech_id = row_speech['id']
+    res['id'] = inserted_speech_id
 
     # 추가한 speech에 해당하는 act의 act_count 1 증가
     db_helper.update_act_count(act_id, 1)
-
+    row_act = db_helper.select_row_by_id('act', act_id)
+    res['act_count'] = row_act['act_count']
 
 
     # slot_value 는 JSON 문자열

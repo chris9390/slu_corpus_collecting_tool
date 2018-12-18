@@ -5,6 +5,16 @@
     {{super()}}
     <script language="JavaScript">
 
+
+        // 엔터를 누르면 '추가' 버튼 클릭 트리거
+        $(document).keypress(function(event) {
+            var keycode = event.keyCode || event.which;
+            if(keycode == '13') {
+                $("#act_add_btn_id").click();
+            }
+        });
+
+
         $(document).ready(function(){
             var is_delete_error = $("#is_delete_error").val();
             if(is_delete_error === '1'){
