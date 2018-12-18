@@ -76,6 +76,7 @@
                 var topic = $.trim($("#top_id").val());
                 var act = $.trim($("#act_id").val());
                 $("#act_id").val("");
+                $("#top_id").val("");
 
                 if(category === "" || topic === "" || act === ""){
 
@@ -118,13 +119,13 @@
                                 var topic = json_obj['topic'];
                                 var act_count = 0;
 
-                                $("#act_list_id").append('<li class="list-group-item list-group-item-success"><a href="#">' + act + '</a><span class="badge badge-pill badge-info float-right">' + act_count + '</span></li>');
+                                $("#act_list_id").append('<li class="list-group-item list-group-item-success"><div class="row"><div class="col"><a href="#" class="MyActList" title="' + act + '">' + act + '</a></div><div class="col-2"><span class="badge badge-pill badge-info float-right">' + act_count + '</span></div></div></li>');
                                 $("#act_board_id").prepend('<tr class="table-success"><td class="text-center">' + id + '</td><td class="text-center">' + act + '</td><td class="text-center">' + act_count + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal(' + "'" + id + "'" + ')" value="삭제"></td></tr>');
 
                                 // 추가한 act에 대한 모달창 생성
                                 $(".container-fluid").append(
-                                    '<div id="myModal' + id + '" class="modal fade" role="dialog">\n' +
-                                    '            <div class="modal-dialog modal-sm">\n' +
+                                    '       <div id="myModal' + id + '" class="modal fade" role="dialog">\n' +
+                                    '            <div class="modal-dialog" style="width:30%">\n' +
                                     '                <div class="modal-content">\n' +
                                     '                    <div class="modal-header">\n' +
                                     '                        <h4 class="modal-title"><i class="fas fa-exclamation-triangle"></i>경고</h4>\n' +
@@ -138,8 +139,7 @@
                                     '                    <div class="modal-footer">\n' +
                                     '                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>\n' +
                                     '                        <form class="MyFormClass">\n' +
-                                    '                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes()">\n' +
-                                    '                            <input type="hidden" name="id" id="hidden_id" value="">\n' +
+                                    '                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes('+ id +');">\n' +
                                     '                            <input type="hidden" name="table_name" value="act">\n' +
                                     '                        </form>\n' +
                                     '                    </div>\n' +
@@ -166,21 +166,19 @@
                 }
 
 
-               //$("#act_add_frm_id").attr("method", "post");
-               //$("#act_add_frm_id").attr("action", "/act_create?page={{page}}");
-               //$("#act_add_frm_id").submit();
             });
         });
 
         function trigger_modal(id){
-            $(".modal-footer #hidden_id").val(id);
+            alert(id);
+            //$("#myModal" + id).find('input[name=act_id]').val(id);
             $("#myModal" + id).modal();
         }
 
 
-        function modal_yes(){
+        function modal_yes(id){
             $(".MyFormClass").attr("method", "post");
-            $(".MyFormClass").attr("action", "/act_manager/delete");
+            $(".MyFormClass").attr("action", "/act_manager/delete/" + id);
             $(".MyFormClass").submit();
         }
 
@@ -422,8 +420,8 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>
                         <form class="MyFormClass">
-                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes()">
-                            <input type="hidden" name="id" id="hidden_id" value="">
+                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes('{{row.id}}');">
+                            <!--<input type="hidden" name="act_id" value="{{row.id}}">-->
                             <input type="hidden" name="table_name" value="act">
                         </form>
                     </div>

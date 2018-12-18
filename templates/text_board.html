@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}USER SPEECH BOARD{% endblock %}
 {% block head %}
+
     {{super()}}
     <script language="JavaScript">
 
@@ -180,19 +181,6 @@
                             cnt += 1;
                         });
 
-                        //alert(JSON.stringify(sv_pair_list));
-
-
-                        /*
-                        var i = 0;
-                        for(i = 0 ; i < sv_pair_list.length ; i++){
-                            for(var key in sv_pair_list[i]){
-                                alert(key);
-                                alert(sv_pair_list[i][key]);
-                            }
-                        }
-                        */
-
 
 
                         $.ajax({
@@ -203,17 +191,25 @@
                                 var json_obj = JSON.parse(res);
                                 var id = json_obj['id'];
                                 var act_count = json_obj['act_count'];
+                                var rows_slot = json_obj['rows_slot'];
 
                                 // ACT LIST 에 숫자 부분 증가
-                                $("#act_list_id").children('div').children('li').children('a').each(function(){
+                                $("#act_list_id").find('a').each(function(){
                                     // 추가한 speech의 act를 찾는다.
                                     if($(this).text() === act){
-                                        $(this).parent().children('span').text(act_count);
+                                        $(this).parent().parent().find('span').text(act_count);
                                     }
                                 });
 
                                 var slot_value_part = '';
-                                slot_value_part += '<td class="text-center"><div style="border: 2px groove;">';
+
+                                if(sv_pair_list.length >= 1){
+                                    slot_value_part += '<td class="text-center"><div style="border: 2px groove;">';
+                                }
+                                else{
+                                    slot_value_part += '<td class="text-center"><div>';
+                                }
+
                                 var i, key;
                                 for(i = 0 ; i < sv_pair_list.length ; i++){
                                     for(key in sv_pair_list[i]){
@@ -241,8 +237,7 @@
                                     '                    <div class="modal-footer">\n' +
                                     '                        <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>\n' +
                                     '                        <form class="MyFormClass">\n' +
-                                    '                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes();">\n' +
-                                    '                            <input type="hidden" name="id" id="hidden_id" value="">\n' +
+                                    '                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes('+ id +');">\n' +
                                     '                            <input type="hidden" name="table_name" value="speech">\n' +
                                     '                        </form>\n' +
                                     '                    </div>\n' +
@@ -268,8 +263,17 @@
                                 $("#us_id").val("");
                                 // slot value의 모든 자식 요소 삭제하고
                                 $(".MySV").children('div').remove();
+
+
+                                var slot_list_part = '<datalist id="slot_list">';
+                                for(var i in rows_slot){
+                                    slot_list_part += '<option value=' + rows_slot[i]['slot'] + '>';
+                                }
+                                slot_list_part += '</datalist>';
+
+
                                 // 하나만 새로 추가
-                                $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
+                                $(".MySV").append('<div><input list="slot_list" class="form-control mt-1" value="">' + slot_list_part + ' : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
 
                             },
                             error:function(error){
@@ -290,7 +294,8 @@
 
 
         function trigger_modal(id){
-            $(".modal-footer #hidden_id").val(id);
+            alert(id);
+            //$("#myModal" + id).find('input[name=speech_id]').val(id);
             $("#myModal" + id).modal();
         }
 
@@ -373,19 +378,29 @@
             }
         }
 
-
+        // slot_value 칸 추가 함수
         function sv_add(){
-            //$(".MySV").append('<input type="text" class="form-control mt-1" id="s_id_' + sv_count + '"> : <input type="text" class="form-control" id="v_id_' + sv_count + '"> <button class="btn btn-success sv_add_btn" id="sv_add_btn_id_' + sv_count + '" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning sv_del_btn" id="sv_del_btn_id_' + sv_count + '" type="button" onclick="sv_del();"><i class="fas fa-minus"></i></button>');
-            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
 
-            //sv_count += 1;
+            // hidden input에 있는 slot테이블의 json스트링 데이터를 받아온다.
+            var rows_slot = $("#rows_slot_jsonstr_id").val();
+
+            // json오브젝트 형식으로 변환
+            var rows_slot_parsed = JSON.parse(rows_slot);
+
+            var slot_list_part = '<datalist id="slot_list">';
+            for(var i in rows_slot_parsed){
+                slot_list_part += '<option value=' + rows_slot_parsed[i]['slot'] + '>';
+            }
+            slot_list_part += '</datalist>';
+
+            $(".MySV").append('<div><input list="slot_list" class="form-control mt-1" value="">' + slot_list_part + ' : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
         }
 
 
 
-        function modal_yes(){
+        function modal_yes(id){
             $(".MyFormClass").attr("method", "post");
-            $(".MyFormClass").attr("action", "/user_speech_board/delete");
+            $(".MyFormClass").attr("action", "/user_speech_board/delete/" + id);
             $(".MyFormClass").submit();
         }
 
@@ -398,8 +413,12 @@
 
             // slot value의 모든 자식 요소 삭제하고
             $(".MySV").children('div').remove();
-            // 하나만 새로 추가
-            $(".MySV").append('<div><input type="text" class="form-control mt-1" value=""> : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
+
+            // slot_value 칸 하나 추가
+            sv_add();
+
+            // 첫 slot_value 칸은 삭제되면 안되므로 '-' 버튼의 onclick 이벤트 제거
+            $(".MySV").find('.btn-warning').removeAttr('onclick');
         }
 
     </script>
@@ -407,17 +426,6 @@
 
 {% endblock %}
 
-{% block flash %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="flashes my-4">
-                {% for category, message in messages %}
-                    <p class="{{category}} text-center" style="font-size:20px">{{message}}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-{% endblock %}
 
 {% block nav %}
 <ul class="navbar-nav">
@@ -443,6 +451,10 @@
 
 {% block content %}
 
+<!-- 서버측에서 전송해준 slot 테이블의 json스트링 데이터 -->
+<input type="hidden" id="rows_slot_jsonstr_id" value="{{rows_slot_jsonstr}}">
+
+
     <div class="container-fluid">
 
 
@@ -451,7 +463,6 @@
                 <div class="col-md-10">
                     <div class="form-group">
                         <input type="text" class="form-control col-md-12" id="SearchText" name="search_msg" placeholder="문장을 검색해주세요." disabled>
-                        <!--<input type="hidden" name="page" value="{{page}}">-->
                     </div>
                 </div>
 
@@ -460,114 +471,6 @@
                 </div>
             </form>
         </div>
-
-
-        <!--
-        {% if article_title is defined and article_title is not none %}
-        <div class="row my-4">
-
-            <div class="col col-2 text-left">
-                {% if article_id == '0' %}
-                    <input type="button" class="btn btn-primary btn-block my-2" value="모든 기사 목록" onclick="location.href='/article_board?page=1&col_name=article_id&asc1_desc0=1';">
-                {% else %}
-                    {% if article_id is not defined or article_id == 'None' %}
-                        <input type="button" class="btn btn-primary btn-block" value="해당 카테고리 목록" onclick="location.href='/article_board';">
-                    {% else %}
-                        <input type="button" class="btn btn-primary btn-block" value="해당 카테고리 목록" onclick="location.href='/article_board?col_name=article_id&page=1&asc1_desc0=1&sid1={{sid1}}&sid2={{sid2}}';">
-                    {% endif %}
-                    <input type="button" class="btn btn-primary btn-block my-2" value="모든 기사 목록" onclick="location.href='/article_board?page=1&col_name=article_id&asc1_desc0=1';">
-                {% endif %}
-            </div>
-
-
-            <div class="col">
-                <div class="row">
-                    <div class="card border-dark mx-1">
-                        <div class="card-body">
-                            <div class="card-title">기사 번호</div>
-
-                            <div clsas="card-text">
-                                <div class="col text-center font-weight-bold">
-                                    {{article_id}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card border-dark mx-1">
-                        <div class="card-body">
-                            <div class="card-title">기사 제목</div>
-
-                            <div clsas="card-text">
-                                <div class="col text-center font-weight-bold">
-                                    {{article_title}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card border-dark mx-1">
-                        <div class="card-body">
-                            <div class="card-title">대분류</div>
-
-                            <div clsas="card-text">
-                                <div class="col text-center font-weight-bold">
-                                    {{sid1}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="card border-dark mx-1">
-                        <div class="card-body">
-                            <div class="card-title">소분류</div>
-
-                            <div clsas="card-text">
-                                <div class="col text-center font-weight-bold">
-                                    {{sid2}}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col col-2 text-right">
-                <input type="button" class="btn btn-primary" value="글쓰기" onclick="location.href='/text_board/create?page={{page}}';">
-            </div>
-        </div>
-
-        {% else %}
-        <div class="row my-4">
-            <div class="col col-2 text-left">
-                <input type="button" class="btn btn-primary btn-block my-2" value="모든 기사 목록" onclick="location.href='/article_board?col_name=article_id&page=1&asc1_desc0=1';">
-            </div>
-
-            <div class="col text-right">
-                <input type="button" class="btn btn-primary" value="글쓰기" onclick="location.href='/text_board/create?page={{page}}';">
-            </div>
-        </div>
-        {% endif %}
-        -->
-
-
-        <!--
-        <div class="row">
-            <div class="col-2"></div>
-
-            <label class="btn btn-primary mr-2">
-                <input type="radio" name="option" checked="checked" id="option1" value="모든 문장"> 모든 문장 ({{inc_num_none_count}})
-            </label>
-
-            <label class="btn btn-primary mr-2">
-                <input type="radio" name="option" id="option2" value="숫자 포함 문장"> 숫자 포함 문장 ({{inc_num_1_count}})
-            </label>
-
-            <label class="btn btn-primary">
-                <input type="radio" name="option" id="option3" value="숫자 미포함 문장"> 숫자 미포함 문장 ({{inc_num_0_count}})
-            </label>
-        </div>
-        -->
 
 
         <div class="row">
@@ -639,9 +542,14 @@
                                         <div clsas="card-text">
                                             <div class="col font-weight-bold MySV">
                                                 <div>
-                                                    <input type="text" class="form-control" id="s_id_1" value="">
+                                                    <input list="slot_list" class="form-control" value="">
+                                                    <datalist id="slot_list">
+                                                    {% for row_slot in rows_slot %}
+                                                        <option value="{{row_slot.slot}}">
+                                                    {% endfor %}
+                                                    </datalist>
                                                     :
-                                                    <input type="text" class="form-control" id="v_id_1" value="">
+                                                    <input type="text" class="form-control" value="">
 
                                                     <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button>
                                                     <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button>
@@ -702,15 +610,29 @@
                                 <td class="text-center">{{row.topic}}</td>
                                 <td class="text-center">{{row.act}}</td>
                                 <td class="text-center">
-                                    <div style="border: 2px groove;">
-                                        {% for each_dict in row.slot_value %}
+                                    <!-- slot_value 쌍이 존재하는 경우 -->
+                                    {% if row.slot_value | length >= 1 %}
+                                        <div style="border: 2px groove;">
+                                            {% for each_dict in row.slot_value %}
                                             {% for key, value in each_dict.items() %}
                                                 {{key}} : {{value}}
                                                 <br>
                                             {% endfor %}
                                         {% endfor %}
                                     </div>
+                                    <!-- slot_value 쌍이 존재하지 않는 경우 -->
+                                    {% else %}
+                                        <div>
+                                            {% for each_dict in row.slot_value %}
+                                            {% for key, value in each_dict.items() %}
+                                                {{key}} : {{value}}
+                                                <br>
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </td>
+
 
                                 <td class="text-center">
                                     <input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal('{{row.id}}')" value="삭제">
@@ -726,27 +648,6 @@
             </div>
         </div>
 
-
-        <!--
-        <div class="row my-4">
-            <div class="col col-2 text-left">
-                {% if article_title is defined and article_title is not none %}
-                    {% if article_id == '0' %}
-                        <input type="button" class="btn btn-primary btn-block my-2" value="모든 기사 목록" onclick="location.href='/article_board?page=1&col_name=article_id&asc1_desc0=1';">
-                    {% else %}
-                        <input type="button" class="btn btn-primary btn-block" value="해당 카테고리 목록" onclick="location.href='/article_board?col_name=article_id&page=1&asc1_desc0=1';">
-                        <input type="button" class="btn btn-primary btn-block my-2" value="모든 기사 목록" onclick="location.href='/article_board?page=1&col_name=article_id&asc1_desc0=1';">
-                    {% endif %}
-                {% else %}
-                    <input type="button" class="btn btn-primary btn-block my-2" value="모든 기사 목록" onclick="location.href='/article_board?page=1&col_name=article_id&asc1_desc0=1';">
-                {% endif %}
-            </div>
-
-            <div class="col text-right">
-                <input type="button" class="btn btn-primary" value="글쓰기" onclick="location.href='/text_board/create?page={{page}}';">
-            </div>
-        </div>
-        -->
 
 
         {% for row in board_total %}
@@ -766,8 +667,8 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>
                         <form class="MyFormClass">
-                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes();">
-                            <input type="hidden" name="id" id="hidden_id" value="">
+                            <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes('{{row.id}}');">
+                            <!--<input type="hidden" name="speech_id" value="{{row.id}}">-->
                             <input type="hidden" name="table_name" value="speech">
                         </form>
                     </div>

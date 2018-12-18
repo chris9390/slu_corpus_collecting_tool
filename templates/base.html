@@ -122,6 +122,13 @@
             z-index:1;
         }
 
+
+        .list-group-item div.row div.col{
+            white-space: nowrap;
+            height:25px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 
     {% endblock %}
@@ -133,7 +140,6 @@
 
             <div class="container-fluid">
 
-                {% block flash %}{% endblock %}
 
                 <div class="page-header">
                     <h1>SLU CORPUS COLLECTING TOOL</h1>

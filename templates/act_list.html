@@ -3,7 +3,17 @@
     <div>
     {% for row_act in rows_act %}
         <li class="list-group-item">
-            <a href="#" class="MyActList">{{row_act.act}}</a><span class="badge badge-pill badge-info float-right">{{row_act.act_count}}</span>
+            <div class="row">
+
+                <div class="col">
+                    <a href="#" class="MyActList" title="{{row_act.act}}">{{row_act.act}}</a>
+                </div>
+
+                <div class="col-2">
+                    <span class="badge badge-pill badge-info float-right">{{row_act.act_count}}</span>
+                </div>
+
+            </div>
         </li>
     {% endfor %}
     </div>
