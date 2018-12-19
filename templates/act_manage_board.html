@@ -4,18 +4,39 @@
 {% block head %}
     {{super()}}
     <script language="JavaScript">
+        var status = null;
 
-
-        // 엔터를 누르면 '추가' 버튼 클릭 트리거
+        // 엔터키 눌렀을때 트리거
         $(document).keypress(function(event) {
             var keycode = event.keyCode || event.which;
-            if(keycode == '13') {
+
+
+            var is_modal_open;
+            if(status === 'modal'){
+                is_modal_open = true;
+            }
+            else{
+                is_modal_open = false;
+            }
+
+            //alert(typeof(keycode));
+            //alert(is_modal_open);
+
+            // 모달창이 켜지지 않은 상태에서 엔터키 입력했을 때 '추가' 버튼을 클릭한 것과 같은 기능
+            if(Number(keycode) === 13 && is_modal_open === false ){
                 $("#act_add_btn_id").click();
+            }
+
+            // 모달창이 켜진 상태에서 엔터키 입력했을 때 모달창 '예' 버튼을 클릭한 것과 같은 기능
+            else if(Number(keycode) === 13 && is_modal_open === true ){
+                var id = $("#clicked_modal").val();
+                modal_yes(id);
             }
         });
 
 
         $(document).ready(function(){
+
             var is_delete_error = $("#is_delete_error").val();
             if(is_delete_error === '1'){
                 $.notify("Act 에 해당하는 User Speech 를 먼저 삭제해주세요."
@@ -173,11 +194,17 @@
 
         function trigger_modal(id){
             //$("#myModal" + id).find('input[name=act_id]').val(id);
+
+            // 내가 클릭한 모달의 row id 를 hidden input에 입력
+            status = 'modal';
+            $("#clicked_modal").val(id);
             $("#myModal" + id).modal();
         }
 
 
         function modal_yes(id){
+            // 이 함수를 지나면 모달창이 꺼지기 때문에 status 변수 초기화
+            status = null;
             $(".MyFormClass").attr("method", "post");
             $(".MyFormClass").attr("action", "/act_manage_board/delete/" + id);
             $(".MyFormClass").submit();
@@ -290,6 +317,7 @@
 
 {% block content %}
 <input type="hidden" id="is_delete_error" value="{{is_delete_error}}">
+<input type="hidden" id="clicked_modal" value="">
 
 
 <div class="container-fluid">
