@@ -243,20 +243,20 @@ def reload_text_board():
     '''
 
     #article_id = request.args.get('article_id')
-    article_id = None
+    #article_id = None
 
 
     rows_category = db_helper.select_table('category')
     rows_topic = db_helper.select_table('topic')
     rows_act = db_helper.select_table('act')
 
-    if article_id == 'None' or article_id == '':
-        article_id = None
+    #if article_id == 'None' or article_id == '':
+    #    article_id = None
 
 
 
     # 1 이면 숫자 포함한 문장만 보여주고 0이면 숫자 없는 문장만 보여준다
-    inc_num = request.args.get('inc_num')
+    #inc_num = request.args.get('inc_num')
 
 
 
@@ -265,7 +265,13 @@ def reload_text_board():
     #per_page = 10
 
     asc1_desc0 = request.args.get('asc1_desc0')
+    print('asc1_desc0 : ' + str(asc1_desc0))
+    if asc1_desc0 == None:
+        asc1_desc0 = '0'
     col_name = request.args.get('col_name')
+    print('col_name : ' + str(col_name))
+    if col_name == None:
+        col_name = 'id'
     # ===================================================
 
 
@@ -310,9 +316,21 @@ def reload_text_board():
 
         temp['slot_value'] = slot_value
 
-        print(temp)
         # 각 row의 정보 삽입
         board_total.append(temp)
+
+
+    if asc1_desc0 == '0':
+        print('내림차순 정렬, 기준 칼럼 : id')
+        board_total = sorted(board_total, key=lambda x:x['id'], reverse=True)
+    elif asc1_desc0 == '1':
+        print('오름차순 정렬, 기준 칼럼 : id')
+        board_total = sorted(board_total, key=lambda x:x['id'])
+    else:
+        print("SOMETHING IS WRONG CHECK HERE !!!!!!!!!!")
+
+
+    print((board_total))
 
 
     rows_slot = db_helper.select_table('slot')
@@ -323,14 +341,12 @@ def reload_text_board():
                            user_id=user_id,
                            asc1_desc0=asc1_desc0,
                            col_name=col_name,
-                           inc_num=inc_num,
+                           #inc_num=inc_num,
                            rows_category=rows_category,
                            rows_topic=rows_topic,
                            rows_act=rows_act,
                            rows_slot=rows_slot,
-                           rows_slot_jsonstr=rows_slot_jsonstr,
-                           is_all_sents=1)
-
+                           rows_slot_jsonstr=rows_slot_jsonstr)
 
 
 
@@ -340,14 +356,9 @@ def reload_text_board():
 @app.route('/text_board', methods = ['GET'])
 #@flask_login.login_required
 def text_board():
-    db_conn = get_db()
-    db_helper = DB_Helper(db_conn)
-
     print(request.method + '\t' + request.url)
-    #search_msg = request.args.get('search_msg')
 
     #user_id = flask_login.current_user.user_id
-
 
     return reload_text_board()
 
@@ -491,10 +502,10 @@ def delete(board_type, id):
         try:
             #id = request.form['act_id']
             db_helper.delete_row_by_id('act', id)
-            return redirect(url_for('act_manager'))
+            return redirect(url_for('act_manage_board'))
         # 자식을 먼저 삭제하라는 pymysql 에러가 발생하면
         except:
-            return redirect(url_for('act_manager', delete_error=1))
+            return redirect(url_for('act_manage_board', delete_error=1))
 
     elif table_name == 'speech':
         try:
@@ -676,12 +687,18 @@ def export(button_type):
 
 
 
-@app.route('/act_manager', methods=['GET'])
-def act_manager():
+@app.route('/act_manage_board', methods=['GET'])
+def act_manage_board():
     db_conn = get_db()
     db_helper = DB_Helper(db_conn)
 
     is_delete_error = request.args.get('delete_error')
+    asc1_desc0 = request.args.get('asc1_desc0')
+    if asc1_desc0 == None:
+        asc1_desc0 = '0'
+    col_name = request.args.get('col_name')
+    if col_name == None:
+        col_name = 'id'
 
     rows_category = db_helper.select_table('category')
 
@@ -703,8 +720,22 @@ def act_manager():
         board_total.append(temp)
 
 
-    return render_template('act_manager.html',
+    if asc1_desc0 == '0':
+        print('내림차순 정렬, 기준 칼럼 : ' + col_name)
+        board_total = sorted(board_total, key=lambda x:x[col_name], reverse=True)
+    elif asc1_desc0 == '1':
+        print('오름차순 정렬, 기준 칼럼 : ' + col_name)
+        board_total = sorted(board_total, key=lambda x:x[col_name])
+    else:
+        print("SOMETHING IS WRONG CHECK HERE !!!!!!!!")
+
+
+
+
+    return render_template('act_manage_board.html',
                            board_total=board_total,
+                           col_name=col_name,
+                           asc1_desc0=asc1_desc0,
                            rows_act=rows_act,
                            rows_category=rows_category,
                            is_delete_error=is_delete_error)
@@ -720,7 +751,7 @@ def ajax_find_topic():
     res = {}
     res['success'] = True
 
-    # act_manager에서 ajax로 보낸 cat값
+    # act_manage_board 에서 ajax로 보낸 cat값
     category = request.form['category']
     category_id = 0
 

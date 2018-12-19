@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}ACT MANAGER{% endblock %}
+{% block title %}ACT MANAGE BOARD{% endblock %}
 
 {% block head %}
     {{super()}}
@@ -75,8 +75,7 @@
                 var category = $.trim($("#cat_id").val());
                 var topic = $.trim($("#top_id").val());
                 var act = $.trim($("#act_id").val());
-                $("#act_id").val("");
-                $("#top_id").val("");
+
 
                 if(category === "" || topic === "" || act === ""){
 
@@ -91,6 +90,9 @@
                     });
                 }
                 else{
+                    $("#act_id").val("");
+                    $("#top_id").val("");
+
                     $.ajax({
                        type:"POST",
                        url:"/ajax_add_act",
@@ -170,7 +172,6 @@
         });
 
         function trigger_modal(id){
-            alert(id);
             //$("#myModal" + id).find('input[name=act_id]').val(id);
             $("#myModal" + id).modal();
         }
@@ -178,7 +179,7 @@
 
         function modal_yes(id){
             $(".MyFormClass").attr("method", "post");
-            $(".MyFormClass").attr("action", "/act_manager/delete/" + id);
+            $(".MyFormClass").attr("action", "/act_manage_board/delete/" + id);
             $(".MyFormClass").submit();
         }
 
@@ -212,6 +213,55 @@
             $("#top_id").val("");
             $("#act_id").val("");
         }
+
+
+        function order_text(id){
+            // 1 이면 오름차순 정렬
+            // 0 이면 내림차순 정렬
+
+            var url = $(location).attr('href');
+            var asc1_desc0 = getParameterByName(url, 'asc1_desc0');
+            var before_selected_col = getParameterByName(url, 'col_name');
+            var ordering = 0;
+
+            if(id == before_selected_col){
+                if(asc1_desc0 == 1) {
+                    ordering = 0;
+                }
+                else {
+                    ordering = 1;
+                }
+            }
+            else {
+                ordering = 1;
+            }
+
+            //location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering);
+            location.replace('/act_manage_board?col_name=' + id + '&asc1_desc0=' + ordering);
+
+        }
+
+        function getParameterByName(url, param_name){
+            try {
+                var after_part = url.split("?")[1];
+                var param_arr = after_part.split("&");
+            }
+            catch{
+                return null;
+            }
+
+            for(var i = 0 ; i < param_arr.length ; i++)
+            {
+                var key_value = param_arr[i].split("=");
+
+                if(key_value[0] === param_name)
+                {
+                    return key_value[1];
+                }
+            }
+        }
+
+
     </script>
 
 {% endblock %}
@@ -219,11 +269,11 @@
 {% block nav %}
 <ul class="navbar-nav">
     <li class="nav-item active">
-        <a class="nav-link" href="#">Act Manager</a>
+        <a class="nav-link" href="{{url_for('act_manage_board')}}">Act Manage Board</a>
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" href="{{url_for('text_board', col_name='sent_id', asc1_desc0=1)}}">User Speech Board</a>
+        <a class="nav-link" href="{{url_for('text_board')}}">User Speech Board</a>
     </li>
 
     <li class="nav-item">

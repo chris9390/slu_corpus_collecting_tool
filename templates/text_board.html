@@ -294,7 +294,6 @@
 
 
         function trigger_modal(id){
-            alert(id);
             //$("#myModal" + id).find('input[name=speech_id]').val(id);
             $("#myModal" + id).modal();
         }
@@ -304,13 +303,11 @@
         function order_text(id){
             // 1 이면 오름차순 정렬
             // 0 이면 내림차순 정렬
+
             var url = $(location).attr('href');
             var asc1_desc0 = getParameterByName(url, 'asc1_desc0');
-            var search_msg = getParameterByName(url, 'search_msg');
-            var article_id = getParameterByName(url, 'article_id');
-            var inc_num = getParameterByName(url, 'inc_num');
             var before_selected_col = getParameterByName(url, 'col_name');
-            var ordering = 1;
+            var ordering = 0;
 
             if(id == before_selected_col){
                 if(asc1_desc0 == 1) {
@@ -325,28 +322,12 @@
             }
 
 
-            // 검색한 경우 ordering
-            if(search_msg){
-                if(inc_num){
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&search_msg=" + search_msg + "&inc_num=" + inc_num);
-                }
-                else{
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&search_msg=" + search_msg);
-                }
-            }
-            // 검색하지 않았을 경우 ordering
-            else{
-                if(inc_num){
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering + "&inc_num=" + inc_num);
-                }
-                else{
-                    location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering);
-                }
-
-            }
-
+            //location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering);
+            location.replace('/text_board?col_name=' + id + '&asc1_desc0=' + ordering);
 
         }
+
+
 
         function search_text(){
             var search_msg = $("#SearchText").val().trim();
@@ -364,8 +345,13 @@
 
 
         function getParameterByName(url, param_name){
-            var after_part = url.split("?")[1];
-            var param_arr = after_part.split("&");
+            try {
+                var after_part = url.split("?")[1];
+                var param_arr = after_part.split("&");
+            }
+            catch{
+                return null;
+            }
 
             for(var i = 0 ; i < param_arr.length ; i++)
             {
@@ -430,11 +416,11 @@
 {% block nav %}
 <ul class="navbar-nav">
     <li class="nav-item">
-        <a class="nav-link" href="{{url_for('act_manager')}}">Act Manager</a>
+        <a class="nav-link" href="{{url_for('act_manage_board')}}">Act Manage Board</a>
     </li>
 
     <li class="nav-item active">
-        <a class="nav-link" href="{{url_for('text_board', col_name='sent_id', asc1_desc0=1)}}">User Speech Board</a>
+        <a class="nav-link" href="{{url_for('text_board')}}">User Speech Board</a>
     </li>
 
     <li class="nav-item">
@@ -583,15 +569,15 @@
                             <tr>
                                 <div>
                                 {% set cname_1 = 'fas fa-sort' %}
-                                {% if asc1_desc0 == '0' and col_name == 'sent_id' %}
+                                {% if asc1_desc0 == '0' and col_name == 'id' %}
                                     {% set cname_1 = 'fas fa-sort-down' %}
-                                {% elif asc1_desc0 == '1' and col_name == 'sent_id' %}
+                                {% elif asc1_desc0 == '1' and col_name == 'id' %}
                                     {% set cname_1 = 'fas fa-sort-up' %}
                                 {% else %}
                                     {% set cname_1 = 'fas fa-sort' %}
                                 {% endif %}
                                 </div>
-                                <th style="width : 7%" class="text-center">ID<button class="btn" id="sent_id" onclick="order_text(id)"><i class='{{cname_1}}'></i></button></th>
+                                <th style="width : 7%" class="text-center">ID<button class="btn" id="id" onclick="order_text(id);"><i class='{{cname_1}}'></i></button></th>
                                 <th class="text-center">User Speech</th>
                                 <th style="width : 11%" class="text-center">Category</th>
                                 <th style="width : 15%" class="text-center">Topic</th>
