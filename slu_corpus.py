@@ -545,7 +545,7 @@ def search(board_type):
 '''
 
 
-
+'''
 @app.route('/<board_type>/order', methods=['GET'])
 @flask_login.login_required
 def order(board_type):
@@ -572,16 +572,17 @@ def order(board_type):
             return redirect(url_for('text_board', col_name = col_name, asc1_desc0 = asc1_desc0, page = page, search_msg=search_msg, article_id=article_id, inc_num=inc_num))
         else:
             return redirect(url_for('text_board', col_name=col_name, asc1_desc0=asc1_desc0, page=page, search_msg=search_msg, inc_num=inc_num))
-
+'''
 
 
 @app.route('/export', defaults={'button_type':''})
 @app.route('/export/<button_type>', methods=['GET', 'POST'])
-@flask_login.login_required
+#@flask_login.login_required
 def export(button_type):
     db_conn = get_db()
     db_helper = DB_Helper(db_conn)
-    user_id = flask_login.current_user.user_id
+    #user_id = flask_login.current_user.user_id
+    user_id = 'chris'
 
     if request.method == 'GET':
         return render_template('export.html', user_id=user_id)
@@ -970,6 +971,90 @@ def ajax_add_speech():
 
 
 
+@app.route('/export_all', methods=['POST'])
+def export_all():
+    db_conn = get_db()
+    db_helper = DB_Helper(db_conn)
+
+    all_corpus_data = []
+
+    rows_speech = db_helper.select_table('speech')
+    for row_speech in rows_speech:
+
+        each_utterance = {}
+        each_utterance['session_id'] = None
+
+        utters = []
+        each_utters = {}
+
+        speech_id = row_speech['id']
+        speech = row_speech['speech']
+        act_id = row_speech['act_id']
+        row_act = db_helper.select_row_by_id('act', act_id)
+
+        act = row_act['act']
+
+        topic_id = row_act['topic_id']
+        row_topic = db_helper.select_row_by_id('topic', topic_id)
+        topic = row_topic['topic']
+
+        category_id = row_act['category_id']
+        row_category = db_helper.select_row_by_id('category', category_id)
+        category = row_category['category']
+
+
+        dialog_acts = []
+        each_dialog_acts = {}
+        rows_slot_value = db_helper.select_rows_by_condition('speech_id', 'slot_value', speech_id)
+        # slot_value 쌍이 없는 경우
+        if len(rows_slot_value) == 0:
+            each_dialog_acts['act'] = act
+            each_dialog_acts['slot'] = None
+            each_dialog_acts['value'] = None
+            dialog_acts.append(each_dialog_acts)
+        # slot_value 쌍이 존재하는 경우
+        else:
+            for row_slot_value in rows_slot_value:
+                each_dialog_acts = {}
+
+                slot_id = row_slot_value['slot_id']
+                row_slot = db_helper.select_row_by_id('slot', slot_id)
+                slot = row_slot['slot']
+
+                value_id = row_slot_value['value_id']
+                row_value = db_helper.select_row_by_id('value', value_id)
+                value = row_value['value']
+
+                each_dialog_acts['act'] = act
+                each_dialog_acts['slot'] = slot
+                each_dialog_acts['value'] = value
+
+                dialog_acts.append(each_dialog_acts)
+
+
+        each_utters['dialog_acts'] = dialog_acts
+        each_utters['semantic_tagged'] = None
+        each_utters['speaker'] = "User"
+        each_utters['text'] = speech
+        each_utters['text_spaced'] = None
+        each_utters['category'] = category
+        each_utters['topic'] = topic
+        each_utters['turn_index'] = '1'
+
+        utters.append(each_utters)
+
+        each_utterance['utters'] = utters
+
+        all_corpus_data.append(each_utterance)
+
+
+    all_corpus_json = json.dumps(all_corpus_data, indent=4, ensure_ascii=False, sort_keys=True)
+    print(all_corpus_json)
+
+    res = make_response(all_corpus_json)
+    res.headers['Content-Disposition'] = "attachment; filename=corpus_data.json"
+
+    return res
 
 
 # ==================================================================================================================================

@@ -18,6 +18,7 @@
 
     <script>
         $(document).ready(function() {
+
             //$('.flashes').fadeToggle(4000);
             setTimeout(function(){
                 $('.flashes').slideUp();
@@ -129,6 +130,17 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+
+        .navbar-nav .nav-item .nav-page:after{
+            content:"|";
+            color: #818182;
+            padding-left:1em;
+
+        }
+
+
+
     </style>
 
     {% endblock %}
@@ -142,7 +154,17 @@
 
 
                 <div class="page-header">
-                    <h1>SLU CORPUS COLLECTING TOOL</h1>
+                    <div class="row">
+
+                        <div class="col-5 ">
+                            <h1>SLU CORPUS COLLECTING TOOL</h1>
+                        </div>
+
+                        <div class="col">
+                            <marquee class="h-100" behavior="scroll" direction="right" bgcolor="black"><img src="https://static.fjcdn.com/gifs/Pacman_7a13e6_1160035.gif" height="50"></marquee>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 

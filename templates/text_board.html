@@ -312,7 +312,7 @@
         function trigger_modal(id){
             //$("#myModal" + id).find('input[name=speech_id]').val(id);
 
-            status = 'modal'
+            status = 'modal';
             // 내가 클릭한 모달의 row id 를 hidden input에 입력
             $("#clicked_modal").val(id);
             $("#myModal" + id).modal();
@@ -429,6 +429,13 @@
             $(".MySV").find('.btn-warning').removeAttr('onclick');
         }
 
+
+        function export_all(){
+            $("#frm").attr("method", "post");
+            $("#frm").attr("action", "/export_all");
+            $("#frm").submit();
+        }
+
     </script>
 
 
@@ -438,21 +445,23 @@
 {% block nav %}
 <ul class="navbar-nav">
     <li class="nav-item">
-        <a class="nav-link" href="{{url_for('act_manage_board')}}">Act Manage Board</a>
+        <a class="nav-link nav-page" href="{{url_for('act_manage_board')}}">Act Manage Board</a>
     </li>
 
     <li class="nav-item active">
-        <a class="nav-link" href="{{url_for('text_board')}}">User Speech Board</a>
+        <a class="nav-link nav-page" href="{{url_for('text_board')}}">User Speech Board</a>
     </li>
 
     <li class="nav-item">
-        <a class="nav-link" href="{{url_for('export')}}">Export</a>
+        <form id="frm">
+            <button type="button" class="btn btn-primary" onclick="export_all();" title="download all data as json format">Export as JSON</button>
+        </form>
     </li>
 </ul>
 
 <ul class="navbar-nav ml-auto">
     <li class="nav-item"><a class="nav-link" href="#">{{user_id}}님 접속중...</a></li>
-    <li class="nav-item"><a class="nav-link" href="{{url_for('logout')}}"><i class="fa-blink"><i class="fas fa-sign-out-alt"></i></i> 로그아웃</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{url_for('logout')}}"><i class="fas fa-sign-out-alt"></i> 로그아웃</a></li>
 </ul>
 {% endblock %}
 
@@ -467,7 +476,7 @@
 
 
         <div class="row">
-            <form class="form-inline my-2" id="frm" role="search">
+            <form class="form-inline my-2" id="frmmmmmm" role="search">
                 <div class="col-md-10">
                     <div class="form-group">
                         <input type="text" class="form-control col-md-12" id="SearchText" name="search_msg" placeholder="문장을 검색해주세요." disabled>
