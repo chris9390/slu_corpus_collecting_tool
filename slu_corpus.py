@@ -6,7 +6,7 @@ import pymysql
 import os
 from db_helper import DB_Helper
 from flask_paginate import Pagination
-from datetime import timedelta
+from datetime import timedelta, datetime
 import json
 import time
 
@@ -1051,8 +1051,13 @@ def export_all():
     all_corpus_json = json.dumps(all_corpus_data, indent=4, ensure_ascii=False, sort_keys=True)
     print(all_corpus_json)
 
+    current_date = datetime.today().strftime('%Y-%m-%d__%H-%M-%S')
+    corpus_data_cnt = len(all_corpus_data)
+
+    filename = 'slu_corpus_data__cnt' + str(corpus_data_cnt) + '__' + current_date + '.json'
+
     res = make_response(all_corpus_json)
-    res.headers['Content-Disposition'] = "attachment; filename=corpus_data.json"
+    res.headers['Content-Disposition'] = "attachment; filename=" + filename
 
     return res
 

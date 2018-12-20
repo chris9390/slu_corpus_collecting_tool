@@ -8,6 +8,8 @@
 
         // 엔터키 눌렀을때 트리거
         $(document).keypress(function(event) {
+
+
             var keycode = event.keyCode || event.which;
 
             var is_modal_open;
@@ -32,6 +34,9 @@
 
 
         $(document).ready(function(){
+
+            highlight_value();
+
 
             // ACT LIST 목록을 클릭하면
             $(".MyActList").click(function(){
@@ -217,25 +222,27 @@
                                     }
                                 });
 
-                                var slot_value_part = '';
 
+                                var slot_value_part = '';
                                 if(sv_pair_list.length >= 1){
-                                    slot_value_part += '<td class="text-center"><div style="border: 2px groove;">';
+                                    slot_value_part += '<td class="text-center sv_class"><div style="border: 2px groove;">';
+                                    var i, key;
+                                    for(i = 0 ; i < sv_pair_list.length ; i++){
+                                        for(key in sv_pair_list[i]){
+                                            slot_value_part += '<span class="k_span">' + key + '</span>' + ' : ' + '<span class="v_span">' + sv_pair_list[i][key] + '</span><br>';
+                                        }
+                                    }
+                                    slot_value_part += '</div></td>';
                                 }
                                 else{
-                                    slot_value_part += '<td class="text-center"><div>';
+                                    slot_value_part += '<td class="text-center"></td>';
                                 }
 
-                                var i, key;
-                                for(i = 0 ; i < sv_pair_list.length ; i++){
-                                    for(key in sv_pair_list[i]){
-                                        slot_value_part += key + ' : ' + sv_pair_list[i][key] + '<br>';
-                                    }
-                                }
-                                slot_value_part += '</div></td>';
 
                                 // speech board 테이블에 추가
-                                $("#speech_board_id").prepend('<tr class="table-success"><td class="text-center">' + id + '</td><td class="text-center">' + user_speech + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center">' + act + '</td>' + slot_value_part + '<td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal(' + id + ')" value="삭제"></td>');
+                                $("#speech_board_id").prepend('<tr class="table-success"><td class="text-center">' + id + '</td><td class="text-center speech_class">' + user_speech + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center">' + act + '</td>' + slot_value_part + '<td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal(' + id + ')" value="삭제"></td>');
+
+                                highlight_value();
 
                                 $(".container-fluid").append(
                                     '        <div id="myModal' + id + '" class="modal fade" role="dialog">\n' +
@@ -436,6 +443,36 @@
             $("#frm").submit();
         }
 
+        function highlight_value(){
+            $("#speech_board_id").children('tr').children('td').each(function(){
+
+                if($(this).hasClass('sv_class')){
+
+                    var key;
+
+                    $(this).children('div').children('span').each(function(){
+
+                        if($(this).hasClass('k_span')){
+                            key = $(this).text();
+                        }
+
+                        // User Speech에 value에 해당하는 부분에 배경색 지정해주는 부분
+                        if($(this).hasClass('v_span')){
+                            var value = $(this).text();
+                            var regex = new RegExp(value);
+                            var a = $(this).parent().parent().parent().children(".speech_class");
+                            var fixed = a.html().replace(regex, "<span style='background-color:greenyellow' data-toggle='popover' data-placement='bottom' data-trigger='hover' data-content='"+ key + "'>" + value + "</span>");
+                            a.html(fixed);
+                        }
+
+                    });
+                }
+
+            });
+
+
+            $('[data-toggle="popover"]').popover();
+        }
     </script>
 
 
@@ -622,31 +659,20 @@
                         {% for row in board_total %}
                             <tr>
                                 <td class="text-center">{{row.id}}</td>
-                                <td class="text-center">{{row.speech}}</td>
+                                <td class="text-center speech_class">{{row.speech}}</td>
                                 <td class="text-center">{{row.category}}</td>
                                 <td class="text-center">{{row.topic}}</td>
                                 <td class="text-center">{{row.act}}</td>
-                                <td class="text-center">
+                                <td class="text-center sv_class">
                                     <!-- slot_value 쌍이 존재하는 경우 -->
                                     {% if row.slot_value | length >= 1 %}
                                         <div style="border: 2px groove;">
                                             {% for each_dict in row.slot_value %}
-                                            {% for key, value in each_dict.items() %}
-                                                {{key}} : {{value}}
-                                                <br>
+                                                {% for key, value in each_dict.items() %}
+                                                <span class="k_span">{{key}}</span> : <span class="v_span">{{value}}</span><br>
+                                                {% endfor %}
                                             {% endfor %}
-                                        {% endfor %}
-                                    </div>
-                                    <!-- slot_value 쌍이 존재하지 않는 경우 -->
-                                    {% else %}
-                                        <div>
-                                            {% for each_dict in row.slot_value %}
-                                            {% for key, value in each_dict.items() %}
-                                                {{key}} : {{value}}
-                                                <br>
-                                            {% endfor %}
-                                        {% endfor %}
-                                    </div>
+                                        </div>
                                     {% endif %}
                                 </td>
 
