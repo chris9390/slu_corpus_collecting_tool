@@ -1019,6 +1019,17 @@ class DB_Helper:
         c.close()
 
 
+    def update_content_by_id(self, table_name, column_name, content, id):
+        c = self.conn.cursor()
+
+        sql = "UPDATE %s SET %s = '%s' WHERE id = %s" % (table_name, column_name, content, id)
+
+        c.execute(sql)
+        self.conn.commit()
+
+        c.close()
+
+
 
     def delete_row_by_id(self, table_name, id):
         c = self.conn.cursor()
@@ -1031,4 +1042,16 @@ class DB_Helper:
         print("Number of rows deleted: %d" % c.rowcount)
         c.close()
 
+
+
+    def delete_rows_by_contidion(self, table_name, column_name, condition):
+        c = self.conn.cursor()
+
+        sql = "DELETE FROM %s WHERE %s = '%s'" % (table_name, column_name, condition)
+
+        c.execute(sql)
+        self.conn.commit()
+
+        print("Number of rows deleted: %d" % c.rowcount)
+        c.close()
 

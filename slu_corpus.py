@@ -147,7 +147,7 @@ def login_check():
             session.permanent = True
             app.permanent_session_lifetime = timedelta(hours=6)
 
-            return redirect(url_for('text_board', page=1, col_name='article_id', asc1_desc0='1'))
+            return redirect(url_for('user_speech_board', page=1, col_name='id', asc1_desc0='0'))
 
         else:
             error_msg = '로그인 정보가 맞지 않습니다.'
@@ -230,7 +230,8 @@ def unauthorized():
 # ===================================================================================================================
 
 
-def reload_text_board():
+def reload_user_speech_board(act):
+
     db_conn = get_db()
     db_helper = DB_Helper(db_conn)
 
@@ -274,11 +275,22 @@ def reload_text_board():
         col_name = 'id'
     # ===================================================
 
-
-
+    is_act_clicked = 0
 
     board_total = []
-    rows_speech = db_helper.select_table('speech')
+
+    # 모든 act에 대해 speech 출력
+    if act == None:
+        rows_speech = db_helper.select_table('speech')
+    # 특정 act의 speech만 출력
+    else:
+        is_act_clicked = 1
+        rows_act_temp = db_helper.select_rows_by_condition('act', 'act', act)
+        act_id = rows_act_temp[0]['id']
+        # 특정 act에 해당하는 speech 만 추출
+        rows_speech = db_helper.select_rows_by_condition('act_id', 'speech', act_id)
+
+
     for row_speech in rows_speech:
         temp = {}
         speech_id = row_speech['id']
@@ -320,6 +332,7 @@ def reload_text_board():
         board_total.append(temp)
 
 
+
     if asc1_desc0 == '0':
         print('내림차순 정렬, 기준 칼럼 : id')
         board_total = sorted(board_total, key=lambda x:x['id'], reverse=True)
@@ -336,7 +349,7 @@ def reload_text_board():
     rows_slot = db_helper.select_table('slot')
     rows_slot_jsonstr = json.dumps(rows_slot)
 
-    return render_template('text_board.html',
+    return render_template('user_speech_board.html',
                            board_total=board_total,
                            user_id=user_id,
                            asc1_desc0=asc1_desc0,
@@ -346,21 +359,24 @@ def reload_text_board():
                            rows_topic=rows_topic,
                            rows_act=rows_act,
                            rows_slot=rows_slot,
-                           rows_slot_jsonstr=rows_slot_jsonstr)
+                           rows_slot_jsonstr=rows_slot_jsonstr,
+                           is_act_clicked=is_act_clicked,
+                           act=act)
 
 
 
 
 
 
-@app.route('/text_board', methods = ['GET'])
+@app.route('/user_speech_board', methods = ['GET'])
 #@flask_login.login_required
-def text_board():
+def user_speech_board():
     print(request.method + '\t' + request.url)
-
+    act = request.args.get('act')
+    print(act)
     #user_id = flask_login.current_user.user_id
 
-    return reload_text_board()
+    return reload_user_speech_board(act)
 
 
 
@@ -517,9 +533,94 @@ def delete(board_type, id):
             db_helper.update_act_count(act_id, 0)
             # speech 테이블의 해당 id 삭제 (speech를 삭제하면 slot_value 테이블의 해당 speech_id인 row들도 같이 삭제되도록 on delete cascade 설정해 놓았다.)
             db_helper.delete_row_by_id('speech', id)
-            return redirect(url_for('text_board'))
+            return redirect(url_for('user_speech_board'))
         except:
-            return redirect(url_for('text_board'))
+            return redirect(url_for('user_speech_board'))
+
+
+
+
+@app.route('/user_speech_board/edit/<id>', methods=['POST'])
+def edit(id):
+    db_conn = get_db()
+    db_helper = DB_Helper(db_conn)
+
+    act = request.form['modal_act']
+    speech = request.form['modal_speech']
+    topic = request.form['modal_top']
+    category = request.form['modal_cat']
+
+    speech_id = id
+
+    rows_act = db_helper.select_rows_by_condition('act', 'act', act)
+    act_id = rows_act[0]['id']
+
+    # speech 변경
+    db_helper.update_content_by_id('speech', 'speech', speech, speech_id)
+    # act id 변경
+    db_helper.update_content_by_id('speech', 'act_id', act_id, speech_id)
+
+
+    # 해당 speech id의 기존 등록된 slot value를 일단 모두 삭제하고 다시 추가
+    db_helper.delete_rows_by_contidion('slot_value', 'speech_id', speech_id)
+
+    # json 문자열
+    slot_value = request.form['edit_sv_pair']
+    # 리스트 형식으로 타입 변경
+    slot_value = json.loads(slot_value)
+    for each in slot_value:
+        slot = each['slot']
+        value = each['value']
+
+        # 초기화
+        value_id = 0
+
+        # ================ 우선 slot 과 value 존재 여부에 따른 처리 ================ #
+        # slot이 존재하면
+        try:
+            rows_slot = db_helper.select_rows_by_condition('slot', 'slot', slot)
+            slot_id = rows_slot[0]['id']
+
+
+            # slot에 해당하는 후보 value들
+            rows_value = db_helper.select_rows_by_condition('slot_id', 'value', slot_id)
+            is_new_value = 1
+            for row_value in rows_value:
+                # 이미 등록된 value
+                if row_value['value'] == value:
+                    is_new_value = 0
+                    value_id = row_value['id']
+                    break
+
+            # 기존에 없는 새로운 value 라면 추가
+            if is_new_value == 1:
+                db_helper.insert_new_value(value, slot_id)
+                row_value = db_helper.select_latest_row('value')
+                value_id = row_value['id']
+
+
+        # 존재하지 않는 slot이면 slot과 value 각각 새로 추가
+        except:
+            # 새로운 slot 추가
+            db_helper.insert_new_slot(slot)
+            rows_slot = db_helper.select_rows_by_condition('slot', 'slot', slot)
+            # 새로 추가한 slot의 id
+            slot_id = rows_slot[0]['id']
+            # 새로 추가한 slot 에 해당하는 새로운 value 추가
+            db_helper.insert_new_value(value, slot_id)
+            rows_value = db_helper.select_rows_by_condition('slot_id', 'value', slot_id)
+            value_id = rows_value[0]['id']
+        # ================ 우선 slot 과 value 존재 여부에 따른 처리 ================ #
+
+
+        db_helper.insert_new_slot_value(speech_id, slot_id, value_id)
+
+
+
+    return redirect(url_for('user_speech_board', act=act))
+
+
+
 
 
 
@@ -573,6 +674,10 @@ def order(board_type):
         else:
             return redirect(url_for('text_board', col_name=col_name, asc1_desc0=asc1_desc0, page=page, search_msg=search_msg, inc_num=inc_num))
 '''
+
+
+
+
 
 
 @app.route('/export', defaults={'button_type':''})
@@ -777,6 +882,43 @@ def ajax_find_topic():
     return json.dumps(res)
 
 
+@app.route('/ajax_find_speech_sv_pair', methods=['POST'])
+def ajax_find_speech_sv_pair():
+    db_conn = get_db()
+    db_helper = DB_Helper(db_conn)
+
+    res = {}
+    res['success'] = True
+
+    speech_id = request.form['id']
+
+    row_speech = db_helper.select_row_by_id('speech', speech_id)
+    speech = row_speech['speech']
+    speech_id = row_speech['id']
+    res['speech'] = speech
+
+    slot_value_pairs = []
+    rows_slot_value = db_helper.select_rows_by_condition('speech_id', 'slot_value', speech_id)
+    for row_slot_value in rows_slot_value:
+        temp = {}
+
+        value_id = row_slot_value['value_id']
+        row_value = db_helper.select_row_by_id('value', value_id)
+        value = row_value['value']
+
+        slot_id = row_slot_value['slot_id']
+        row_slot = db_helper.select_row_by_id('slot', slot_id)
+        slot = row_slot['slot']
+
+        temp['slot'] = slot
+        temp['value'] = value
+        slot_value_pairs.append(temp)
+
+    res['slot_value'] = slot_value_pairs
+
+    return json.dumps(res)
+
+
 
 @app.route('/ajax_add_act', methods=['POST'])
 def ajax_add_act():
@@ -850,8 +992,11 @@ def ajax_find_by_act():
     db_conn = get_db()
     db_helper = DB_Helper(db_conn)
 
+
+
     res = {}
     res['success'] = True
+
 
     act = request.form['act']
     rows_act = db_helper.select_rows_by_condition('act', 'act', act)

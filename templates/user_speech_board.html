@@ -5,6 +5,7 @@
     {{super()}}
     <script language="JavaScript">
         var status = null;
+        var sv_pair_cnt = 0;
 
         // 엔터키 눌렀을때 트리거
         $(document).keypress(function(event) {
@@ -12,56 +13,95 @@
 
             var keycode = event.keyCode || event.which;
 
-            var is_modal_open;
-            if(status === 'modal'){
-                is_modal_open = true;
+            var is_del_modal_open;
+            if(status === 'del_modal'){
+                is_del_modal_open = true;
             }
             else{
-                is_modal_open = false;
+                is_del_modal_open = false;
             }
 
-            // 모달창이 켜지지 않은 상태에서 엔터키 입력했을 때 '추가' 버튼을 클릭한 것과 같은 기능
-            if(Number(keycode) === 13 && is_modal_open === false) {
+            var is_edit_modal_open;
+            if(status === 'edit_modal'){
+                is_edit_modal_open = true;
+            }
+            else{
+                is_edit_modal_open = false;
+            }
+
+            // 삭제 모달창에서 엔터 누른 경우
+            if(Number(keycode) === 13 && is_del_modal_open === true){
+                var id = $("#clicked_del_modal_id").val();
+                modal_yes(id);
+            }
+            // 편집 모달창에서 엔터 누른 경우
+            else if(Number(keycode) === 13 && is_edit_modal_open === true){
+                modal_edit_yes();
+            }
+            // 모달창이 안켜진 상태에서 엔터 누른 경우
+            else if(Number(keycode) === 13 && is_del_modal_open === false && is_edit_modal_open === false){
                 $("#speech_add_btn_id").click();
             }
 
-            // 모달창이 켜진 상태에서 엔터키 입력했을 때 모달창 '예' 버튼을 클릭한 것과 같은 기능
-            else if(Number(keycode) === 13 && is_modal_open === true){
-                var id = $("#clicked_modal").val();
-                modal_yes(id);
-            }
         });
 
 
         $(document).ready(function(){
 
-            highlight_value();
+            $("#modal_act").change(function(){
 
+                var act = $("#modal_act").val();
 
-            // ACT LIST 목록을 클릭하면
-            $(".MyActList").click(function(){
-                var act = $(this).text();
-
-                $.ajax({
-                   type:"POST",
-                   url:"/ajax_find_by_act",
-                   data:{'act' : act},
-                   success:function(res){
+               $.ajax({
+                    type:"POST",
+                    url:"/ajax_find_by_act",
+                    data:{'act' : act},
+                    success:function(res){
                         var json_obj = JSON.parse(res);
                         var act = json_obj['act'];
                         var category = json_obj['category'];
                         var topic = json_obj['topic'];
 
-                        $("#act_id").val(act);
-                        $("#cat_id").val(category);
-                        $("#top_id").val(topic);
-                   },
+                        $("#modal_cat").val(category);
+                        $("#modal_top").val(topic);
+
+                    },
                     error:function(error){
-                       alert("ERROR : " + error);
+                        alert("ERROR : " + error);
                     }
                 });
             });
 
+
+            // ACT LIST 목록에서 특정 act가 클릭되었다면
+            if($("#is_act_clicked").val() === '1'){
+
+                var act = $("#act").val();
+
+                $.ajax({
+                    type:"POST",
+                    url:"/ajax_find_by_act",
+                    data:{'act' : act},
+                    success:function(res){
+                        var json_obj = JSON.parse(res);
+                        var act = json_obj['act'];
+                        var category = json_obj['category'];
+                        var topic = json_obj['topic'];
+
+
+                        $("#act_id").val(act);
+                        $("#cat_id").val(category);
+                        $("#top_id").val(topic);
+
+                    },
+                    error:function(error){
+                        alert("ERROR : " + error);
+                    }
+                });
+
+            }
+
+            highlight_value();
 
 
             // '추가' 버튼을 클릭하면
@@ -73,6 +113,7 @@
                 var user_speech = $.trim($("#us_id").val());
 
 
+
                 if(act === ''){
                     $.notify("ACT LIST 에서 액트를 선택해주세요."
                         ,{
@@ -80,7 +121,7 @@
                             delay:2000,
                             animate: {
                                     enter: 'animated bounceInDown',
-                                    exit: 'animated hinge'
+                                    exit: 'animated bounceOutUp'
                             }
                         });
                 }
@@ -92,7 +133,7 @@
                             delay:2000,
                             animate: {
                                     enter: 'animated bounceInDown',
-                                    exit: 'animated hinge'
+                                    exit: 'animated bounceOutUp'
                             }
                         });
                 }
@@ -153,7 +194,7 @@
                             delay:2000,
                             animate: {
                                     enter: 'animated bounceInDown',
-                                    exit: 'animated hinge'
+                                    exit: 'animated bounceOutUp'
                             }
                         });
                     }
@@ -164,7 +205,7 @@
                             delay:2000,
                             animate: {
                                     enter: 'animated bounceInDown',
-                                    exit: 'animated hinge'
+                                    exit: 'animated bounceOutUp'
                             }
                         });
                     }
@@ -240,7 +281,7 @@
 
 
                                 // speech board 테이블에 추가
-                                $("#speech_board_id").prepend('<tr class="table-success"><td class="text-center">' + id + '</td><td class="text-center speech_class">' + user_speech + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center">' + act + '</td>' + slot_value_part + '<td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal(' + id + ')" value="삭제"></td>');
+                                $("#speech_board_id").prepend('<tr class="table-success"><td class="text-center">' + id + '</td><td class="text-center speech_class">' + user_speech + '</td><td class="text-center">' + category + '</td><td class="text-center">' + topic + '</td><td class="text-center">' + act + '</td>' + slot_value_part + '<td class="text-center"><input type="button" class="btn btn-danger btn-sm" onclick="trigger_del_modal(' + id + ')" value="삭제"></td>');
 
                                 highlight_value();
 
@@ -277,7 +318,7 @@
                                         delay: 2000,
                                         animate: {
                                             enter: 'animated bounceInDown',
-                                            exit: 'animated hinge'
+                                            exit: 'animated bounceOutUp'
                                         }
                                 });
 
@@ -287,8 +328,8 @@
                                 // slot value의 모든 자식 요소 삭제하고
                                 $(".MySV").children('div').remove();
 
-
-                                var slot_list_part = '<datalist id="slot_list">';
+                                sv_pair_cnt = 0;
+                                var slot_list_part = '<datalist id="slot_list_' + sv_pair_cnt + '">';
                                 for(var i in rows_slot){
                                     slot_list_part += '<option value=' + rows_slot[i]['slot'] + '>';
                                 }
@@ -296,7 +337,9 @@
 
 
                                 // 하나만 새로 추가
-                                $(".MySV").append('<div><input list="slot_list" class="form-control mt-1" value="">' + slot_list_part + ' : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
+                                $(".MySV").append('<div class="mt-1"><input list="slot_list_' + sv_pair_cnt + '" class="form-control" value="">' + slot_list_part + ' : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
+
+                                sv_pair_cnt += 1;
 
                             },
                             error:function(error){
@@ -316,15 +359,112 @@
 
 
 
-        function trigger_modal(id){
+        function trigger_del_modal(id){
             //$("#myModal" + id).find('input[name=speech_id]').val(id);
 
-            status = 'modal';
+            status = 'del_modal';
             // 내가 클릭한 모달의 row id 를 hidden input에 입력
-            $("#clicked_modal").val(id);
+            $("#clicked_del_modal_id").val(id);
             $("#myModal" + id).modal();
         }
 
+
+        function trigger_edit_modal(id, category, topic, act){
+            $("#clicked_edit_modal_id").val(id);
+            status = 'edit_modal';
+
+            $("#modal_act").val(act);
+            $("#modal_cat").val(category);
+            $("#modal_top").val(topic);
+
+
+            $.ajax({
+               type:"POST",
+               url:"/ajax_find_speech_sv_pair",
+               data:{'id' : id},
+               success:function(res){
+                   var json_obj = JSON.parse(res);
+                   var speech = json_obj['speech'];
+                   var slot_value = json_obj['slot_value'];
+
+                   $(".myModalSV").children('div').remove();
+
+
+                   // hidden input에 있는 slot테이블의 json스트링 데이터를 받아온다.
+                   var rows_slot = $("#rows_slot_jsonstr_id").val();
+
+                   // json오브젝트 형식으로 변환
+                   var rows_slot_parsed = JSON.parse(rows_slot);
+
+                   var slot_list_part = '<datalist id="slot_list_modal">';
+                   for(var i in rows_slot_parsed){
+                       slot_list_part += '<option value=' + rows_slot_parsed[i]['slot'] + '>';
+                   }
+                   slot_list_part += '</datalist>';
+
+
+                   // 등록된 slot value 쌍 모달창에 입력
+                   $("#speech_board_id").children('tr').children('td').each(function(){
+
+                       if($(this).hasClass('id_class')){
+
+                           // 클릭한 row를 id를 통해 찾는 부분
+                           if($(this).text() === id){
+
+                               var key;
+                               var value;
+                               var i = 0;
+                               var is_exist_slot_value = 0;
+
+                               $(this).parent().children('.sv_class').find('span').each(function(){
+
+                                    is_exist_slot_value = 1;
+
+                                   // key
+                                   if($(this).hasClass('k_span')){
+                                        key = $(this).text();
+                                   }
+
+                                  // value
+                                  if($(this).hasClass('v_span')){
+                                        value = $(this).text();
+
+                                        // 첫번째 slot value pair는 삭제할 수 없도록 삭제 버튼의 onclick 제거
+                                        if(i === 0){
+                                            $(".myModalSV").append('<div class="row mt-1"><div class="col-4"><input list="slot_list_modal" class="form-control" value="' + key +'">' + slot_list_part + '</div> : <div class="col-4"><input type="text" class="form-control" value="' + value + '"></div><button class="btn btn-success mr-1" type="button" onclick="modal_sv_add();"><i class="fas fa-plus"></i></button><button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
+                                        }
+                                        else{
+                                            $(".myModalSV").append('<div class="row mt-1"><div class="col-4"><input list="slot_list_modal" class="form-control" value="' + key +'">' + slot_list_part + '</div> : <div class="col-4"><input type="text" class="form-control" value="' + value + '"></div><button class="btn btn-success mr-1" type="button" onclick="modal_sv_add();"><i class="fas fa-plus"></i></button><button class="btn btn-warning" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
+                                        }
+
+                                        i += 1;
+                                  }
+
+
+                               });
+
+                               // slot value 쌍이 하나도 없는 speech라면 비어있는 slot value 칸 하나 추가
+                               if(is_exist_slot_value === 0){
+                                   $(".myModalSV").append('<div class="row mt-1"><div class="col-4"><input list="slot_list_modal" class="form-control" value="">' + slot_list_part + '</div> : <div class="col-4"><input type="text" class="form-control" value=""></div><button class="btn btn-success mr-1" type="button" onclick="modal_sv_add();"><i class="fas fa-plus"></i></button><button class="btn btn-warning" type="button"><i class="fas fa-minus"></i></button></div>');
+                               }
+                           }
+                       }
+                   });
+
+
+                   // speech를 파라미터로 가져오지 않고 ajax로 받아온 이유 : 글자 배경 색을 바꿔주는 태그 까지 같이 따라와서
+                   $("#modal_speech").val(speech);
+               },
+                error:function(error){
+                   alert("ERROR : " + error);
+                }
+            });
+
+
+
+
+            $("#myEditModal").modal();
+        }
 
 
         function order_text(id){
@@ -332,6 +472,8 @@
             // 0 이면 내림차순 정렬
 
             var url = $(location).attr('href');
+
+            var act = getParameterByName(url, 'act');
             var asc1_desc0 = getParameterByName(url, 'asc1_desc0');
             var before_selected_col = getParameterByName(url, 'col_name');
             var ordering = 0;
@@ -349,8 +491,13 @@
             }
 
 
-            //location.replace("/" + 'text_board' + "/order?article_id=" + article_id + "&col_name=" + id + "&asc1_desc0=" + ordering);
-            location.replace('/text_board?col_name=' + id + '&asc1_desc0=' + ordering);
+
+            if(act == null){
+                location.replace('/user_speech_board?col_name=' + id + '&asc1_desc0=' + ordering);
+            }
+            else{
+                location.replace('/user_speech_board?act=' + act + '&col_name=' + id + '&asc1_desc0=' + ordering);
+            }
 
         }
 
@@ -364,7 +511,7 @@
             }
             else{
                 $("#frm").attr("method", "get");
-                $("#frm").attr("action", "/text_board/search");
+                $("#frm").attr("action", "/user_speech_board/search");
                 $("#frm").submit();
             }
 
@@ -393,6 +540,7 @@
 
         // slot_value 칸 추가 함수
         function sv_add(){
+            sv_pair_cnt += 1;
 
             // hidden input에 있는 slot테이블의 json스트링 데이터를 받아온다.
             var rows_slot = $("#rows_slot_jsonstr_id").val();
@@ -400,13 +548,32 @@
             // json오브젝트 형식으로 변환
             var rows_slot_parsed = JSON.parse(rows_slot);
 
-            var slot_list_part = '<datalist id="slot_list">';
+            var slot_list_part = '<datalist id="slot_list_' + sv_pair_cnt +'">';
             for(var i in rows_slot_parsed){
                 slot_list_part += '<option value=' + rows_slot_parsed[i]['slot'] + '>';
             }
             slot_list_part += '</datalist>';
 
-            $(".MySV").append('<div><input list="slot_list" class="form-control mt-1" value="">' + slot_list_part + ' : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
+            $(".MySV").append('<div class="mt-1"><input list="slot_list_' + sv_pair_cnt + '" class="form-control" value="">' + slot_list_part + ' : <input type="text" class="form-control" value=""> <button class="btn btn-success" type="button" onclick="sv_add();"><i class="fas fa-plus"></i></button> <button class="btn btn-warning" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
+
+
+        }
+
+
+        function modal_sv_add(){
+            // hidden input에 있는 slot테이블의 json스트링 데이터를 받아온다.
+            var rows_slot = $("#rows_slot_jsonstr_id").val();
+
+            // json오브젝트 형식으로 변환
+            var rows_slot_parsed = JSON.parse(rows_slot);
+
+            var slot_list_part = '<datalist id="slot_list_modal">';
+            for(var i in rows_slot_parsed){
+                slot_list_part += '<option value=' + rows_slot_parsed[i]['slot'] + '>';
+            }
+            slot_list_part += '</datalist>';
+
+            $(".myModalSV").append('<div class="row mt-1"><div class="col-4"><input list="slot_list_modal" class="form-control" value="">' + slot_list_part + '</div> : <div class="col-4"><input type="text" class="form-control" value=""></div><button class="btn btn-success mr-1" type="button" onclick="modal_sv_add();"><i class="fas fa-plus"></i></button><button class="btn btn-warning" type="button" onclick="$(this).parent().remove();"><i class="fas fa-minus"></i></button></div>');
         }
 
 
@@ -420,6 +587,154 @@
         }
 
 
+        function modal_edit_yes(){
+            var id = $("#clicked_edit_modal_id").val();
+            var act = $("#modal_act").val();
+            var category = $("#modal_cat").val();
+            var topic = $("#modal_top").val();
+            var user_speech = $.trim($("#modal_speech").val());
+
+
+            if(act === ''){
+                $.notify("ACT LIST 에서 액트를 선택해주세요."
+                    ,{
+                        type:'danger',
+                        delay:2000,
+                        animate: {
+                                enter: 'animated bounceInDown',
+                                exit: 'animated bounceOutUp'
+                        }
+                    });
+            }
+
+            if(user_speech === ''){
+                $.notify("User Speech 를 입력해주세요."
+                    ,{
+                        type:'danger',
+                        delay:2000,
+                        animate: {
+                                enter: 'animated bounceInDown',
+                                exit: 'animated bounceOutUp'
+                        }
+                    });
+
+            }
+
+            // act와 user_speech 정보가 모두 입력이 되어 있다면
+            else if(act !== '' && user_speech !== '') {
+                var is_slot_empty = 0;
+                var error_flag = 0;
+                var value_error_flag = 0;
+                var cnt = 0;
+
+
+                // slov-value 쌍 제대로 입력되어 있는지 확인
+                $(".myModalSV").children('div').find('input').each(function(){
+
+                    var val = $.trim($(this).val());
+
+                    // slot
+                    if(cnt % 2 == 0){
+                        if(val === ''){
+                            is_slot_empty = 1;
+                        }
+                        else{
+                            is_slot_empty = 0;
+                        }
+                    }
+
+                    // value
+                    else{
+                        // slot은 값이 없는데 value가 값이 있는 경우
+                        if(val !== '' && is_slot_empty === 1){
+                            error_flag = 1;
+                            // break의 역할
+                            return false;
+                        }
+                        // slot에 값이 있는데 value가 비어있는 경우
+                        else if(val === '' && is_slot_empty === 0){
+                            error_flag = 1;
+                            return false;
+                        }
+                        // slot, value 다 값이 있는데 value 가 user speech에 없는 단어인 경우
+                        else if(val !== '' && is_slot_empty === 0){
+                            if(user_speech.includes(val) === false){
+                                value_error_flag = 1;
+                                return false;
+                            }
+                        }
+                    }
+
+
+                    cnt += 1;
+                });
+
+
+                if(error_flag === 1){
+                    $("#myEditModal").modal();
+
+                    $.notify("Slot : Value 를 다시 확인해주세요."
+                    ,{
+                        type:'danger',
+                        delay:2000,
+                        animate: {
+                                enter: 'animated bounceInDown',
+                                exit: 'animated bounceOutUp'
+                        }
+                    });
+
+
+
+                }
+                else if(value_error_flag === 1){
+                    $.notify("Value 는 User Speech 에 있는 단어여야 합니다."
+                    ,{
+                        type:'danger',
+                        delay:2000,
+                        animate: {
+                                enter: 'animated bounceInDown',
+                                exit: 'animated bounceOutUp'
+                        }
+                    });
+                }
+                else{
+                    status = null;
+
+                    /* 모달창의 slot value 쌍을 hidden input에 입력해주는 부분(backend쪽에서 request.form으로 받아볼 수 있도록) */
+                    var json_obj = [];
+                    var temp = {};
+                    var cnt = 0;
+                    $(".myModalSV").children('div').find('input').each(function() {
+                        var val = $.trim($(this).val());
+
+                        // slot
+                        if(cnt % 2 === 0){
+                            temp['slot'] = val;
+                        }
+                        // value
+                        else{
+                            temp['value'] = val;
+                            json_obj.push(temp);
+                            temp = {};
+                        }
+
+                        cnt += 1;
+                    });
+                    $("#edit_sv_pair").val(JSON.stringify(json_obj));
+                    /* 모달창의 slot value 쌍을 hidden input에 입력해주는 부분(backend쪽에서 request.form으로 받아볼 수 있도록) */
+
+
+                    $("#myEditForm").attr("method", "post");
+                    $("#myEditForm").attr("action", "/user_speech_board/edit/" + id);
+                    $("#myEditForm").submit();
+
+                }
+            }
+
+
+        }
+
+
         function reset_all(){
             $("#act_id").val("");
             $("#cat_id").val("");
@@ -428,6 +743,7 @@
 
             // slot value의 모든 자식 요소 삭제하고
             $(".MySV").children('div').remove();
+            sv_pair_cnt = -1;
 
             // slot_value 칸 하나 추가
             sv_add();
@@ -444,7 +760,12 @@
         }
 
         function highlight_value(){
+
+            var bg_color_list = ['#d9ff66', '#ffb366', '#66b3ff', '#6666ff', '#d966ff', '#ff6666'];
+
             $("#speech_board_id").children('tr').children('td').each(function(){
+
+                var i = 0;
 
                 if($(this).hasClass('sv_class')){
 
@@ -461,9 +782,15 @@
                             var value = $(this).text();
                             var regex = new RegExp(value);
                             var a = $(this).parent().parent().parent().children(".speech_class");
-                            var fixed = a.html().replace(regex, "<span style='background-color:greenyellow' data-toggle='popover' data-placement='bottom' data-trigger='hover' data-content='"+ key + "'>" + value + "</span>");
+                            var fixed = a.html().replace(regex, "<span style='background-color:" + bg_color_list[i] +"' data-toggle='popover' data-placement='bottom' data-trigger='hover' data-content='"+ key + "'>" + value + "</span>");
                             a.html(fixed);
+
+
+                            $(this).css('background-color', bg_color_list[i])
+
+                            i += 1;
                         }
+
 
                     });
                 }
@@ -474,6 +801,10 @@
             $('[data-toggle="popover"]').popover();
         }
     </script>
+
+    <style>
+
+    </style>
 
 
 {% endblock %}
@@ -486,7 +817,7 @@
     </li>
 
     <li class="nav-item active">
-        <a class="nav-link nav-page" href="{{url_for('text_board')}}">User Speech Board</a>
+        <a class="nav-link nav-page" href="{{url_for('user_speech_board')}}">User Speech Board</a>
     </li>
 
     <li class="nav-item">
@@ -507,7 +838,10 @@
 
 <!-- 서버측에서 전송해준 slot 테이블의 json스트링 데이터 -->
 <input type="hidden" id="rows_slot_jsonstr_id" value="{{rows_slot_jsonstr}}">
-<input type="hidden" id="clicked_modal" value="">
+<input type="hidden" id="clicked_del_modal_id" value="">
+<input type="hidden" id="is_act_clicked" value="{{is_act_clicked}}">
+<input type="hidden" id="act" value="{{act}}">
+
 
     <div class="container-fluid">
 
@@ -521,7 +855,8 @@
                 </div>
 
                 <div class="form-group">
-                    <input type="submit" class="btn btn-primary" onclick="search_text()" value="검색">
+                    <!--<input type="submit" class="btn btn-primary" onclick="search_text()" value="검색">-->
+                    <input type="submit" class="btn btn-primary" value="검색">
                 </div>
             </form>
         </div>
@@ -596,8 +931,8 @@
                                         <div clsas="card-text">
                                             <div class="col font-weight-bold MySV">
                                                 <div>
-                                                    <input list="slot_list" class="form-control" value="">
-                                                    <datalist id="slot_list">
+                                                    <input list="slot_list_0" class="form-control" value="">
+                                                    <datalist id="slot_list_0">
                                                     {% for row_slot in rows_slot %}
                                                         <option value="{{row_slot.slot}}">
                                                     {% endfor %}
@@ -658,8 +993,8 @@
                         <tbody id="speech_board_id">
                         {% for row in board_total %}
                             <tr>
-                                <td class="text-center">{{row.id}}</td>
-                                <td class="text-center speech_class">{{row.speech}}</td>
+                                <td class="text-center id_class">{{row.id}}</td>
+                                <td class="text-center speech_class"><a href="javascript:void(0);" onclick="trigger_edit_modal('{{row.id}}','{{row.category}}','{{row.topic}}','{{row.act}}');" style="color:black;" onmouseover="this.style.color='blue';" onmouseleave="this.style.color='black';">{{row.speech}}</a></td>
                                 <td class="text-center">{{row.category}}</td>
                                 <td class="text-center">{{row.topic}}</td>
                                 <td class="text-center">{{row.act}}</td>
@@ -678,7 +1013,7 @@
 
 
                                 <td class="text-center">
-                                    <input type="button" class="btn btn-danger btn-sm" onclick="trigger_modal('{{row.id}}')" value="삭제">
+                                    <input type="button" class="btn btn-danger btn-sm" onclick="trigger_del_modal('{{row.id}}')" value="삭제">
                                 </td>
 
                             </tr>
@@ -692,9 +1027,8 @@
         </div>
 
 
-
+        <!-- 삭제 Modal -->
         {% for row in board_total %}
-        <!-- Modal -->
         <div id="myModal{{row.id}}" class="modal fade" role="dialog">
             <div class="modal-dialog" style="width:30%">
                 <div class="modal-content">
@@ -711,7 +1045,6 @@
                         <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">아니오</button>
                         <form class="MyFormClass">
                             <input type="submit" class="btn btn-primary" data-dismiss="modal" value="예" onclick="modal_yes('{{row.id}}');">
-                            <!--<input type="hidden" name="speech_id" value="{{row.id}}">-->
                             <input type="hidden" name="table_name" value="speech">
                         </form>
                     </div>
@@ -719,6 +1052,88 @@
             </div>
         </div>
         {% endfor %}
+
+
+
+        <!-- 편집 Modal -->
+        <div id="myEditModal" class="modal fade" role="dialog">
+            <div class="modal-dialog  modal-lg">
+                <form id="myEditForm">
+                    <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h4 class="modal-title"><i class="fas fa-tools"></i>편집</h4>
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="card">
+
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col">
+                                            <div class="card-title font-weight-bold">Act</div>
+                                            <div class="card-text">
+                                                <select class="custom-select" name="modal_act" id="modal_act">
+                                                    {% for row_act in rows_act %}
+                                                        <option title="{{row_act.act}}">{{row_act.act}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <!--<input type="text" class="form-control" name="modal_act" id="modal_act" value="">-->
+                                            </div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="card-title font-weight-bold">Category</div>
+                                            <div class="card-text"><input type="text" class="form-control" name="modal_cat" id="modal_cat" value="" readonly="readonly"></div>
+                                        </div>
+
+                                        <div class="col">
+                                            <div class="card-title font-weight-bold">Topic</div>
+                                            <div class="card-text"><input type="text" class="form-control" name="modal_top" id="modal_top" value="" readonly="readonly"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="card-title font-weight-bold">User Speech</div>
+                                    <div class="card-text"><input type="text" class="form-control" name="modal_speech" id="modal_speech" value="" style="width:100%;"></div>
+                                </div>
+
+                                <div class="card-body">
+
+                                    <div class="card-title font-weight-bold">Slot : Value</div>
+
+
+                                    <div class="card-text">
+                                        <div class="myModalSV">
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+
+
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger mr-auto" data-dismiss="modal">취소</button>
+                            <input type="submit" class="btn btn-primary" value="수정" data-dismiss="modal" onclick="modal_edit_yes();">
+                            <input type="hidden" id="clicked_edit_modal_id" value="">
+                            <input type="hidden" id="edit_sv_pair" name="edit_sv_pair" value="">
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+
 
         <a id="back-to-top" href="#" class="btn btn-primary btn-lg back-to-top" role="button" title="Click to return on the top page" data-toggle="tooltip" data-placement="left"><i class="fas fa-arrow-circle-up fa-2x"></i></a>
 
