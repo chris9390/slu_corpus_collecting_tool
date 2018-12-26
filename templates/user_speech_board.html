@@ -371,6 +371,8 @@
 
         function trigger_edit_modal(id, category, topic, act){
             $("#clicked_edit_modal_id").val(id);
+            // edit 되기 전 act
+            $("#before_act").val(act);
             status = 'edit_modal';
 
             $("#modal_act").val(act);
@@ -1125,6 +1127,7 @@
                             <input type="submit" class="btn btn-primary" value="수정" data-dismiss="modal" onclick="modal_edit_yes();">
                             <input type="hidden" id="clicked_edit_modal_id" value="">
                             <input type="hidden" id="edit_sv_pair" name="edit_sv_pair" value="">
+                            <input type="hidden" id="before_act" name="before_act" value="">
                         </div>
 
                     </div>

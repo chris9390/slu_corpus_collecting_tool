@@ -545,6 +545,8 @@ def edit(id):
     db_conn = get_db()
     db_helper = DB_Helper(db_conn)
 
+    # edit 되기 전 act
+    before_act = request.form['before_act']
     act = request.form['modal_act']
     speech = request.form['modal_speech']
     topic = request.form['modal_top']
@@ -555,10 +557,18 @@ def edit(id):
     rows_act = db_helper.select_rows_by_condition('act', 'act', act)
     act_id = rows_act[0]['id']
 
+    rows_bef_act = db_helper.select_rows_by_condition('act', 'act', before_act)
+    bef_act_id = rows_bef_act[0]['id']
+
     # speech 변경
     db_helper.update_content_by_id('speech', 'speech', speech, speech_id)
     # act id 변경
     db_helper.update_content_by_id('speech', 'act_id', act_id, speech_id)
+
+    # edit으로 변경된(추가된) speech의 act의 count 1 증가
+    db_helper.update_act_count(act_id, 1)
+    # edit으로 감소한 speech의 act의 count 1 감소
+    db_helper.update_act_count(bef_act_id, 0)
 
 
     # 해당 speech id의 기존 등록된 slot value를 일단 모두 삭제하고 다시 추가
